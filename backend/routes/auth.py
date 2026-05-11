@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
+import bcrypt
 
 router = APIRouter()
 
@@ -10,7 +11,13 @@ class SignupRequest(BaseModel):
 
 @router.post("/signup")
 def signup(user: SignupRequest):
+
+    hashed_password = bcrypt.hashpw(
+        user.password.encode('utf-8'),
+        bcrypt.gensalt()
+    )
+
     return {
         "message": "Signup successful",
-        "user": user
+        "hashed_password": hashed_password.decode('utf-8')
     }
