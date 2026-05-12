@@ -1,15 +1,31 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
+from pydantic import BaseModel, EmailStr
 from sqlmodel import SQLModel, Field
+from sqlalchemy import DateTime
 
 
-class User(SQLModel, table=True):
+def get_datetime_utc() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+class UserBase(SQLModel):
+    name: str | None = Field(default=None, max_length=255)
+    email: EmailStr = Field(max_length=255)
+    is_active: bool = True
+
+
+class UserCreate(UserBase):
+    password: str = Field(min_length=8, max_length=128)
+
+
+class User(UserBase, table=True):
     user_id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
-    name: str
-    email: str = Field(unique=True)
     password_hash: str
-    created_at: datetime
-    is_active: bool
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
 
 
 class Role(SQLModel, table=True):
@@ -73,3 +89,12 @@ class Task_Assignments(SQLModel, table=True):
     assigned_by: uuid.UUID = Field(foreign_key="user.user_id")
     assigned_at: datetime
     reason: str
+
+
+# Validation Models
+
+
+class SignupRequest(BaseModel):
+    name: str
+    email: EmailStr
+    password: str

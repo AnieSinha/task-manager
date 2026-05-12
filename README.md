@@ -3,5 +3,5 @@
 Full-stack task manager with role-based access.
 
 ## Setup
-- Backend: cd backend → npm install → npm start
+- Backend: uvicorn backend.app.main:app --reload
 - Frontend: cd frontend → npm start
