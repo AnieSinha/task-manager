@@ -11,7 +11,7 @@ def get_datetime_utc() -> datetime:
 
 class UserBase(SQLModel):
     name: str | None = Field(default=None, max_length=255)
-    email: EmailStr = Field(max_length=255)
+    email: EmailStr = Field(unique=True, max_length=255)
     is_active: bool = True
 
 
@@ -28,16 +28,24 @@ class User(UserBase, table=True):
     )
 
 
+class RoleCreate(SQLModel):
+    role_name: str
+    description: str | None = None
+
+
 class Role(SQLModel, table=True):
     role_id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
-    role_name: str
-    description: str
+    role_name: str = Field(unique=True)
+    description: str | None = None
 
 
 class User_Role(SQLModel, table=True):
     user_id: uuid.UUID = Field(foreign_key="user.user_id", primary_key=True)
     role_id: uuid.UUID = Field(foreign_key="role.role_id", primary_key=True)
-    timestamp: datetime
+    assigned_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
 
 
 class Backlog_Item(SQLModel, table=True):
@@ -49,7 +57,10 @@ class Backlog_Item(SQLModel, table=True):
     description: str
     priority: str
     status: str
-    created_at: datetime
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
 
 
 class Feature(SQLModel, table=True):
@@ -76,8 +87,11 @@ class Task(SQLModel, table=True):
     status: str
     priority: str
     due_date: datetime
-    created_at: datetime
-    updated_at: datetime
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    updated_at: datetime | None
 
 
 class Task_Assignments(SQLModel, table=True):
@@ -87,7 +101,10 @@ class Task_Assignments(SQLModel, table=True):
     task_id: uuid.UUID = Field(foreign_key="task.task_id")
     assigned_to: uuid.UUID = Field(foreign_key="user.user_id")
     assigned_by: uuid.UUID = Field(foreign_key="user.user_id")
-    assigned_at: datetime
+    assigned_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
     reason: str
 
 
