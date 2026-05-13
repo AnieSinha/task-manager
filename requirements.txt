@@ -5,3 +5,5 @@ uvicorn==0.46.0
 pwdlib==0.3.0
 pwdlib[argon2]
 pwdlib[bcrypt]
+pydantic[email]
+jwt==1.4.0
