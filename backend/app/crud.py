@@ -7,7 +7,7 @@ from app.core.security import get_password_hash, verify_password
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
     db_obj = User.model_validate(
-        user_create, update={"password_hash": get_password_hash(user_create.password)}
+        user_create, update={"hashed_password": get_password_hash(user_create.password)}
     )
     session.add(db_obj)
     session.commit()
@@ -30,7 +30,7 @@ def authenticate(*, session: Session, email: str, password: str) -> User | None:
         # Prevent timing attacks by running verification even when user doesn't exist
         verify_password(password, DUMMY_HASH)
         return None
-    verified, updated_password_hash = verify_password(password, db_user.password_hash)
+    verified, updated_password_hash = verify_password(password, db_user.hashed_password)
     if not verified:
         return None
     if updated_password_hash:
@@ -39,7 +39,3 @@ def authenticate(*, session: Session, email: str, password: str) -> User | None:
         session.commit()
         session.refresh()
     return db_user
-
-
-def get_users(*, session: Session) -> List[User]:
-    pass

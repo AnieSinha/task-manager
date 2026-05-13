@@ -21,7 +21,7 @@ class UserCreate(UserBase):
 
 class User(UserBase, table=True):
     user_id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
-    password_hash: str
+    hashed_password: str
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
@@ -94,7 +94,12 @@ class Task_Assignments(SQLModel, table=True):
 # Validation Models
 
 
-class SignupRequest(BaseModel):
-    name: str
+class UserRegister(BaseModel):
+    name: str | None = Field(default=None, max_length=255)
+    email: EmailStr = Field(max_length=255)
+    password: str = Field(min_length=8, max_length=128)
+
+
+class UserLogin(BaseModel):
     email: EmailStr
     password: str
