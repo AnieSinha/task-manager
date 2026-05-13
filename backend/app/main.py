@@ -1,15 +1,30 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from routes.auth import router as auth_router
-from sqlmodel import SQLModel
-from utils.database import engine
-from backend.app.models import *
+from fastapi.middleware.cors import CORSMiddleware
+from sqlmodel import Session
 
-SQLModel.metadata.create_all(engine)
+from app.api.main import api_router
+from app.core.config import settings
+from app.core.db import init_db
+from app.core.db import engine
 
-app = FastAPI()
 
-app.include_router(auth_router)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    with Session(engine) as session:
+        init_db(session=session)
+    yield
 
-@app.get("/")
-def root():
-    return {"message": "API Running"}
+
+app = FastAPI(title="Task Manager", lifespan=lifespan)
+
+if settings.cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins(),
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+app.include_router(api_router, prefix="/api/v1")
