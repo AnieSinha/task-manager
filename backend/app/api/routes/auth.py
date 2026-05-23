@@ -2,13 +2,13 @@ from fastapi import APIRouter
 
 from app.crud import authenticate, create_user
 from app.api.deps import SessionDeps
-from app.models import LoginRequest, SignupRequest
+from app.models import UserLogin, UserRegister
 
 router = APIRouter()
 
 
 @router.post("/signup")
-def signup(*, session: SessionDeps, user_request: SignupRequest):
+def signup(*, session: SessionDeps, user_request: UserRegister):
     user = create_user(
         session=session,
         user_create=user_request,
@@ -17,7 +17,7 @@ def signup(*, session: SessionDeps, user_request: SignupRequest):
 
 
 @router.post("/login")
-def login(*, session: SessionDeps, user_request: LoginRequest):
+def login(*, session: SessionDeps, user_request: UserLogin):
     authenticate(
         session=session,
         email=user_request.email,

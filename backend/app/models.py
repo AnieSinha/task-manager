@@ -44,13 +44,15 @@ class Backlog_Item(SQLModel, table=True):
     backlog_item_id: uuid.UUID | None = Field(
         default_factory=uuid.uuid4, primary_key=True
     )
+
     created_by: uuid.UUID = Field(foreign_key="user.user_id")
+
     title: str
     description: str
     priority: str
     status: str
-    created_at: datetime
 
+    created_at: datetime = Field(default_factory=get_datetime_utc)
 
 class Feature(SQLModel, table=True):
     feature_id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -76,8 +78,8 @@ class Task(SQLModel, table=True):
     status: str
     priority: str
     due_date: datetime
-    created_at: datetime
-    updated_at: datetime
+    created_at: datetime = Field(default_factory=get_datetime_utc)
+    updated_at: datetime = Field(default_factory=get_datetime_utc)
 
 
 class Task_Assignments(SQLModel, table=True):
@@ -103,3 +105,62 @@ class UserRegister(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+class BacklogCreate(BaseModel):
+    title: str
+    description: str
+    priority: str
+    status: str
+
+
+class BacklogUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    priority: str | None = None
+    status: str | None = None
+
+class FeatureCreate(BaseModel):
+    backlog_item_id: uuid.UUID
+    title: str
+    description: str
+    status: str
+
+
+class FeatureUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    status: str | None = None 
+
+class StoryCreate(BaseModel):
+    feature_id: uuid.UUID
+    title: str
+    description: str
+    status: str
+
+
+class StoryUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    status: str | None = None
+
+class TaskCreate(BaseModel):
+    story_id: uuid.UUID
+    parent_task_id: uuid.UUID | None = None
+
+    title: str
+    description: str
+
+    status: str
+    priority: str
+
+    due_date: datetime
+
+
+class TaskUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+
+    status: str | None = None
+    priority: str | None = None
+
+    due_date: datetime | None = None        

@@ -1,7 +1,15 @@
+import uuid
 from typing import List
 
 from sqlmodel import Session, select
-from app.models import UserCreate, User
+from app.models import (
+    UserCreate,
+    User,
+
+    Backlog_Item,
+    BacklogCreate,
+    BacklogUpdate,
+)
 from app.core.security import get_password_hash, verify_password
 
 
@@ -39,3 +47,92 @@ def authenticate(*, session: Session, email: str, password: str) -> User | None:
         session.commit()
         session.refresh()
     return db_user
+
+#create backlog item
+def create_backlog(
+    *,
+    session: Session,
+    backlog_create: BacklogCreate,
+    user_id,
+):
+    backlog = Backlog_Item(
+        created_by=user_id,
+        title=backlog_create.title,
+        description=backlog_create.description,
+        priority=backlog_create.priority,
+        status=backlog_create.status,
+    )
+
+    session.add(backlog)
+
+    session.commit()
+
+    session.refresh(backlog)
+
+    return backlog
+
+#get all backlog items
+def get_backlogs(*, session: Session):
+    statement = select(Backlog_Item)
+
+    return session.exec(statement).all()
+
+#get single backlog
+def get_backlog_by_id(
+    *,
+    session: Session,
+    backlog_item_id: uuid.UUID,
+):
+    return session.get(
+        Backlog_Item,
+        backlog_item_id,
+    )
+#update backlog
+def update_backlog(
+    *,
+    session: Session,
+    backlog_item_id: uuid.UUID,
+    backlog_update: BacklogUpdate,
+):
+    backlog = session.get(
+        Backlog_Item,
+        backlog_item_id,
+    )
+
+    if not backlog:
+        return None
+
+    update_data = backlog_update.model_dump(
+        exclude_unset=True
+    )
+
+    for key, value in update_data.items():
+        setattr(backlog, key, value)
+
+    session.add(backlog)
+
+    session.commit()
+
+    session.refresh(backlog)
+
+    return backlog
+
+#delete backlog
+def delete_backlog(
+    *,
+    session: Session,
+    backlog_item_id: uuid.UUID,
+):
+    backlog = session.get(
+        Backlog_Item,
+        backlog_item_id,
+    )
+
+    if not backlog:
+        return None
+
+    session.delete(backlog)
+
+    session.commit()
+
+    return True
