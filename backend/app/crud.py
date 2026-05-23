@@ -1,7 +1,5 @@
-from typing import List
-
 from sqlmodel import Session, select
-from app.models import UserCreate, User
+from app.models import Role, RoleCreate, User_Role, UserCreate, User
 from app.core.security import get_password_hash, verify_password
 
 
@@ -39,3 +37,28 @@ def authenticate(*, session: Session, email: str, password: str) -> User | None:
         session.commit()
         session.refresh()
     return db_user
+
+
+def create_role(*, session: Session, role_create: RoleCreate) -> Role:
+    db_obj = Role.model_validate(role_create)
+    session.add(db_obj)
+    session.commit()
+    session.refresh(db_obj)
+    return db_obj
+
+
+def assign_user_role(*, session: Session, email: str, role_name: str) -> User_Role:
+    user = session.exec(select(User).where(User.email == email)).first()
+    role = session.exec(select(Role).where(Role.role_name == role_name)).first()
+
+    if not user:
+        raise Exception("User doesn't exist")
+    if not role:
+        raise Exception("Role doesn't exist")
+
+    user_role = User_Role(user_id=user.user_id, role_id=role.role_id)
+
+    session.add(user_role)
+    session.commit()
+    session.refresh(user_role)
+    return user_role
