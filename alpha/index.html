@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agile Workspace</title>
+    <!-- Boxicons for modern, lightweight icons -->
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <!-- SIDEBAR PANE -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class='bx bx-layer logo-icon'></i>
+                    <span class="logo-text">AgileWorkspace</span>
+                </div>
+                <button class="toggle-btn" id="sidebarToggle" title="Toggle Sidebar">
+                    <i class='bx bx-chevron-left' id="toggleIcon"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-menu">
+                <div class="menu-label">Workspace</div>
+                <ul class="menu-list">
+                    <li><a href="#" class="menu-item active" data-view="backlogs"><i class='bx bx-archive'></i> <span
+                                class="menu-text">Backlogs</span></a></li>
+                    <li><a href="#" class="menu-item" data-view="features"><i class='bx bx-rocket'></i> <span
+                                class="menu-text">Features</span></a></li>
+                    <li><a href="#" class="menu-item" data-view="stories"><i class='bx bx-book-bookmark'></i> <span
+                                class="menu-text">Stories</span></a></li>
+                    <li><a href="#" class="menu-item" data-view="tasks"><i class='bx bx-check-square'></i> <span
+                                class="menu-text">Tasks</span></a></li>
+                    <li><a href="#" class="menu-item" data-view="team"><i class='bx bx-group'></i> <span
+                                class="menu-text">Team</span></a></li>
+                    <li><a href="#" class="menu-item" data-view="metrics"><i class='bx bx-bar-chart-alt-2'></i> <span
+                                class="menu-text">Metrics</span></a></li>
+                </ul>
+
+                <div class="menu-label footer-label">System</div>
+                <ul class="menu-list footer-list">
+                    <li><a href="#" class="menu-item" data-view="settings"><i class='bx bx-cog'></i> <span
+                                class="menu-text">Settings</span></a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- RIGHT WRAPPER (TOP BAR + MAIN WORKSPACE) -->
+        <div class="main-wrapper">
+
+            <!-- TOP BAR PANE -->
+            <header class="top-bar">
+                <div class="search-container">
+                    <i class='bx bx-search search-icon'></i>
+                    <input type="text" placeholder="Global Search..." class="search-input">
+                </div>
+
+                <div class="top-bar-actions">
+                    <button class="btn btn-primary" title="Quick Create Item">
+                        <i class='bx bx-plus'></i> <span>Quick Create</span>
+                    </button>
+                    <button class="icon-btn" title="Notifications">
+                        <i class='bx bx-bell'></i>
+                        <span class="badge"></span>
+                    </button>
+                    <div class="profile-dropdown">
+                        <div class="profile-avatar">JD</div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- MAIN WORKSPACE PANE -->
+            <main class="main-workspace" id="mainWorkspace">
+                <!-- Content injected dynamically via app.js -->
+            </main>
+
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
