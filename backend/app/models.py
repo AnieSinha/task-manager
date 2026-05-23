@@ -76,6 +76,7 @@ class Story(SQLModel, table=True):
     feature_id: uuid.UUID = Field(foreign_key="feature.feature_id")
     title: str
     description: str
+    status: str
 
 
 class Task(SQLModel, table=True):
