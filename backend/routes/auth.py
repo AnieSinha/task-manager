@@ -1,17 +1,30 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from sqlmodel import Session
+from sqlmodel import Session, select
+from jose import jwt
+from datetime import datetime, timedelta
 import bcrypt
+
 from models import User
 from utils.database import engine
-from datetime import datetime
+from middleware.auth_middleware import verify_token
 
 router = APIRouter()
+
+SECRET_KEY = "mysecretkey"
+ALGORITHM = "HS256"
+
 
 class SignupRequest(BaseModel):
     name: str
     email: str
     password: str
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
 
 @router.post("/signup")
 def signup(user: SignupRequest):
@@ -35,4 +48,49 @@ def signup(user: SignupRequest):
 
     return {
         "message": "User registered successfully"
+    }
+
+
+@router.post("/login")
+def login(user: LoginRequest):
+
+    with Session(engine) as session:
+
+        statement = select(User).where(User.email == user.email)
+        db_user = session.exec(statement).first()
+
+        if not db_user:
+            return {"message": "Invalid email or password"}
+
+        password_match = bcrypt.checkpw(
+            user.password.encode('utf-8'),
+            db_user.password_hash.encode('utf-8')
+        )
+
+        if not password_match:
+            return {"message": "Invalid email or password"}
+
+        token_data = {
+            "sub": str(db_user.user_id),
+            "exp": datetime.utcnow() + timedelta(hours=1)
+        }
+
+        token = jwt.encode(
+            token_data,
+            SECRET_KEY,
+            algorithm=ALGORITHM
+        )
+
+        return {
+            "message": "Login successful",
+            "token": token
+        }
+
+
+@router.get("/protected")
+def protected_route(payload=Depends(verify_token)):
+
+    return {
+        "message": "Protected route accessed",
+        "user": payload
     }
