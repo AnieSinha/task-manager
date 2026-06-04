@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from sqlmodel import Session
+from sqlmodel import Session, select
 import uuid
 
 from models import Story
@@ -36,3 +36,14 @@ def create_story(
     return {
         "message": "Story created successfully"
     }
+
+@router.get("/stories")
+def get_stories():
+
+    with Session(engine) as session:
+
+        statement = select(Story)
+
+        stories = session.exec(statement).all()
+
+        return stories

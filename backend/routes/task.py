@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from sqlmodel import Session
+from sqlmodel import Session, select
 from datetime import datetime
 import uuid
 
@@ -46,3 +46,14 @@ def create_task(
     return {
         "message": "Task created successfully"
     }
+
+@router.get("/tasks")
+def get_tasks():
+
+    with Session(engine) as session:
+
+        statement = select(Task)
+
+        tasks = session.exec(statement).all()
+
+        return tasks

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from sqlmodel import Session
+from sqlmodel import Session, select
 import uuid
 
 from models import Feature
@@ -37,3 +37,14 @@ def create_feature(
     return {
         "message": "Feature created successfully"
     }
+
+@router.get("/features")
+def get_features():
+
+    with Session(engine) as session:
+
+        statement = select(Feature)
+
+        features = session.exec(statement).all()
+
+        return features

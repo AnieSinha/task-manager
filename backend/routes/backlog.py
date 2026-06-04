@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from sqlmodel import Session
+from sqlmodel import Session, select
 from datetime import datetime
 import uuid
 
@@ -42,3 +42,14 @@ def create_backlog(
     return {
         "message": "Backlog item created successfully"
     }
+
+@router.get("/backlog")
+def get_backlog():
+
+    with Session(engine) as session:
+
+        statement = select(Backlog_Item)
+
+        backlog_items = session.exec(statement).all()
+
+        return backlog_items
