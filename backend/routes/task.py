@@ -48,11 +48,24 @@ def create_task(
     }
 
 @router.get("/tasks")
-def get_tasks():
+def get_tasks(
+    status: str = None,
+    priority: str = None,
+    story_id: str = None
+):
 
     with Session(engine) as session:
 
         statement = select(Task)
+
+        if status:
+            statement = statement.where(Task.status == status)
+
+        if priority:
+            statement = statement.where(Task.priority == priority)
+
+        if story_id:
+            statement = statement.where(Task.story_id == uuid.UUID(story_id))
 
         tasks = session.exec(statement).all()
 

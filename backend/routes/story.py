@@ -38,11 +38,22 @@ def create_story(
     }
 
 @router.get("/stories")
-def get_stories():
+def get_stories(
+    status: str = None,
+    feature_id: str = None
+):
 
     with Session(engine) as session:
 
         statement = select(Story)
+
+        if status:
+            statement = statement.where(Story.status == status)
+
+        if feature_id:
+            statement = statement.where(
+                Story.feature_id == uuid.UUID(feature_id)
+            )
 
         stories = session.exec(statement).all()
 
