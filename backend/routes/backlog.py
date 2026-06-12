@@ -44,11 +44,22 @@ def create_backlog(
     }
 
 @router.get("/backlog")
-def get_backlog():
+def get_backlog(
+    status: str = None,
+    priority: str = None
+):
 
     with Session(engine) as session:
 
         statement = select(Backlog_Item)
+
+        # status
+        if status:
+            statement = statement.where(Backlog_Item.status == status)
+
+        # priority
+        if priority:
+            statement = statement.where(Backlog_Item.priority == priority)
 
         backlog_items = session.exec(statement).all()
 
