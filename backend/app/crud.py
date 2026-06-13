@@ -1,3 +1,5 @@
+import json
+from app.core.cache import redis_client
 import uuid
 from typing import List
 
@@ -69,24 +71,71 @@ def create_backlog(
 
     session.refresh(backlog)
 
+# Clear cached backlog list
+    redis_client.delete("all_backlogs")
+
     return backlog
 
 #get all backlog items
 def get_backlogs(*, session: Session):
+
+    cache_key = "all_backlogs"
+
+    cached_data = redis_client.get(cache_key)
+
+    if cached_data:
+        print("CACHE HIT")
+        return json.loads(cached_data)
+
+    print("CACHE MISS")
+
     statement = select(Backlog_Item)
 
-    return session.exec(statement).all()
+    backlogs = session.exec(statement).all()
 
+    response = [item.model_dump(mode="json") for item in backlogs]
+
+    redis_client.setex(
+        cache_key,
+        300,  # 5 minutes
+        json.dumps(response)
+    )
+
+    return response
 #get single backlog
 def get_backlog_by_id(
     *,
     session: Session,
     backlog_item_id: uuid.UUID,
 ):
-    return session.get(
+
+    cache_key = f"backlog:{backlog_item_id}"
+
+    cached_data = redis_client.get(cache_key)
+
+    if cached_data:
+        print("SINGLE BACKLOG CACHE HIT")
+        return json.loads(cached_data)
+
+    print("SINGLE BACKLOG CACHE MISS")
+
+    backlog = session.get(
         Backlog_Item,
         backlog_item_id,
     )
+
+    if not backlog:
+        return None
+
+    response = backlog.model_dump(mode="json")
+
+    redis_client.setex(
+        cache_key,
+        300,
+        json.dumps(response)
+    )
+
+    return response
 #update backlog
 def update_backlog(
     *,
@@ -115,6 +164,10 @@ def update_backlog(
 
     session.refresh(backlog)
 
+    # Invalidate cache
+    redis_client.delete("all_backlogs")
+    redis_client.delete(f"backlog:{backlog_item_id}")
+
     return backlog
 
 #delete backlog
@@ -134,5 +187,9 @@ def delete_backlog(
     session.delete(backlog)
 
     session.commit()
+
+# Invalidate cache
+    redis_client.delete("all_backlogs")
+    redis_client.delete(f"backlog:{backlog_item_id}")
 
     return True

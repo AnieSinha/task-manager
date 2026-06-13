@@ -24,3 +24,9 @@ def login(*, session: SessionDeps, user_request: UserLogin):
         password=user_request.password,
     )
     return {"message": "User registered successfully"}
+from app.core.cache import redis_client
+
+@router.get("/test-cache")
+def test_cache():
+    redis_client.set("hello", "world")
+    return {"value": redis_client.get("hello")}
