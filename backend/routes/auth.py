@@ -37,7 +37,8 @@ def signup(user: SignupRequest):
     new_user = User(
         name=user.name,
         email=user.email,
-        password_hash=hashed_password,
+#       password_hash=hashed_password,
+         hashed_password=hashed_password,
         created_at=datetime.now(),
         is_active=True
     )
@@ -64,8 +65,9 @@ def login(user: LoginRequest):
 
         password_match = bcrypt.checkpw(
             user.password.encode('utf-8'),
-            db_user.password_hash.encode('utf-8')
-        )
+            #db_user.password_hash.encode('utf-8')
+            db_user.hashed_password.encode('utf-8')
+        )  
 
         if not password_match:
             return {"message": "Invalid email or password"}
