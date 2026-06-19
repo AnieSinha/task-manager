@@ -1,26 +1,43 @@
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
 
 :root {
-  --bg: #0a0a0f;
-  --surface: #12121a;
-  --surface2: #1a1a26;
-  --surface3: #22223a;
-  --border: #2a2a42;
-  --border-bright: #3a3a5c;
-  --accent: #6c63ff;
-  --accent-hover: #7c73ff;
-  --accent-dim: rgba(108, 99, 255, 0.15);
-  --green: #00e5a0;
-  --green-dim: rgba(0, 229, 160, 0.12);
-  --orange: #ff8c42;
-  --orange-dim: rgba(255, 140, 66, 0.12);
-  --red: #ff4d6d;
-  --red-dim: rgba(255, 77, 109, 0.12);
-  --yellow: #ffd166;
-  --yellow-dim: rgba(255, 209, 102, 0.12);
-  --text: #e8e8f0;
-  --text-muted: #7878a0;
-  --text-dim: #4a4a6a;
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface2: #f1f5f9;
+  --surface3: #e2e8f0;
+
+  --border: #dbe2ea;
+  --border-bright: #cbd5e1;
+
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-dim: rgba(79, 70, 229, 0.1);
+
+  --green: #16a34a;
+  --green-dim: rgba(22, 163, 74, 0.1);
+
+  --orange: #ea580c;
+  --orange-dim: rgba(234, 88, 12, 0.1);
+
+  --red: #dc2626;
+  --red-dim: rgba(220, 38, 38, 0.1);
+
+  --yellow: #ca8a04;
+  --yellow-dim: rgba(202, 138, 4, 0.1);
+
+  --text: #0f172a;
+  --text-muted: #475569;
+  --text-dim: #94a3b8;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-accent: 0 0 20px rgba(79, 70, 229, 0.15);
+
+  --font-body: 'Syne', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+
   --radius: 12px;
   --radius-sm: 8px;
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
@@ -619,8 +636,8 @@ tbody tr:hover td { background: var(--surface2); }
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 60% 50% at 20% 40%, rgba(108, 99, 255, 0.08) 0%, transparent 70%),
-    radial-gradient(ellipse 40% 30% at 80% 60%, rgba(0, 229, 160, 0.05) 0%, transparent 60%);
+    radial-gradient(ellipse 60% 50% at 20% 40%, rgba(79, 70, 229, 0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 80% 60%, rgba(59, 130, 246, 0.06) 0%, transparent 60%);
   pointer-events: none;
 }
 
