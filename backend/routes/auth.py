@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Session, select
 from jose import jwt
@@ -29,20 +29,31 @@ class LoginRequest(BaseModel):
 @router.post("/signup")
 def signup(user: SignupRequest):
 
-    hashed_password = bcrypt.hashpw(
-        user.password.encode('utf-8'),
-        bcrypt.gensalt()
-    ).decode('utf-8')
-
-    new_user = User(
-        name=user.name,
-        email=user.email,
-        hashed_password=hashed_password,
-        created_at=datetime.now(),
-        is_active=True
-    )
-
     with Session(engine) as session:
+
+        existing_user = session.exec(
+            select(User).where(User.email == user.email)
+        ).first()
+
+        if existing_user:
+            raise HTTPException(
+                status_code=400,
+                detail="Email already registered"
+            )
+
+        hashed_password = bcrypt.hashpw(
+            user.password.encode('utf-8'),
+            bcrypt.gensalt()
+        ).decode('utf-8')
+
+        new_user = User(
+            name=user.name,
+            email=user.email,
+            hashed_password=hashed_password,
+            created_at=datetime.now(),
+            is_active=True
+        )
+
         session.add(new_user)
         session.commit()
 
