@@ -57,4 +57,46 @@ def get_stories(
 
         stories = session.exec(statement).all()
 
-        return stories
+        return storiesclass
+class StoryUpdateRequest(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    status: str | None = None
+
+
+@router.get("/story/{story_id}")
+def get_story(story_id: str):
+    from fastapi import HTTPException
+    with Session(engine) as session:
+        item = session.get(Story, uuid.UUID(story_id))
+        if not item:
+            raise HTTPException(status_code=404, detail="Story not found")
+        return item
+
+
+@router.patch("/story/{story_id}")
+def update_story(story_id: str, payload: StoryUpdateRequest, payload_user=Depends(verify_token)):
+    from fastapi import HTTPException
+    with Session(engine) as session:
+        item = session.get(Story, uuid.UUID(story_id))
+        if not item:
+            raise HTTPException(status_code=404, detail="Story not found")
+        update_data = payload.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(item, key, value)
+        session.add(item)
+        session.commit()
+        session.refresh(item)
+        return item
+
+
+@router.delete("/story/{story_id}")
+def delete_story(story_id: str, payload_user=Depends(verify_token)):
+    from fastapi import HTTPException
+    with Session(engine) as session:
+        item = session.get(Story, uuid.UUID(story_id))
+        if not item:
+            raise HTTPException(status_code=404, detail="Story not found")
+        session.delete(item)
+        session.commit()
+        return {"message": "Story deleted"}   

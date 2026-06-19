@@ -64,3 +64,50 @@ def get_backlog(
         backlog_items = session.exec(statement).all()
 
         return backlog_items
+class BacklogUpdateRequest(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    priority: str | None = None
+    status: str | None = None
+
+
+@router.get("/backlog/{backlog_item_id}")
+def get_backlog_item(backlog_item_id: str):
+    with Session(engine) as session:
+        item = session.get(Backlog_Item, uuid.UUID(backlog_item_id))
+        if not item:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Backlog item not found")
+        return item
+
+
+@router.patch("/backlog/{backlog_item_id}")
+def update_backlog_item(
+    backlog_item_id: str,
+    payload: BacklogUpdateRequest,
+    payload_user=Depends(verify_token)
+):
+    from fastapi import HTTPException
+    with Session(engine) as session:
+        item = session.get(Backlog_Item, uuid.UUID(backlog_item_id))
+        if not item:
+            raise HTTPException(status_code=404, detail="Backlog item not found")
+        update_data = payload.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(item, key, value)
+        session.add(item)
+        session.commit()
+        session.refresh(item)
+        return item
+
+
+@router.delete("/backlog/{backlog_item_id}")
+def delete_backlog_item(backlog_item_id: str, payload_user=Depends(verify_token)):
+    from fastapi import HTTPException
+    with Session(engine) as session:
+        item = session.get(Backlog_Item, uuid.UUID(backlog_item_id))
+        if not item:
+            raise HTTPException(status_code=404, detail="Backlog item not found")
+        session.delete(item)
+        session.commit()
+        return {"message": "Backlog item deleted"}
