@@ -11,7 +11,13 @@ from routes.feature import router as feature_router
 from routes.story import router as story_router
 from fastapi.middleware.cors import CORSMiddleware
 
+# Keep both routes
+from routes.task_assignment import router as task_assignment_router
+from routes.dashboard import router as dashboard_router
+
+
 app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -22,11 +28,17 @@ app.add_middleware(
 
 SQLModel.metadata.create_all(engine)
 
+# Existing routers
 app.include_router(auth_router)
 app.include_router(backlog_router)
 app.include_router(feature_router)
 app.include_router(story_router)
 app.include_router(task_router)
+
+# Keep both newly added routers
+app.include_router(task_assignment_router)
+app.include_router(dashboard_router)
+
 
 @app.get("/")
 def root():
