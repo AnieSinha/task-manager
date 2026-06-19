@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlmodel import Session, select
 import uuid
+from enum import Enum
 
 from models import Story
 from utils.database import engine
@@ -16,6 +17,13 @@ class StoryRequest(BaseModel):
     description: str
 
 
+# Enum for Swagger dropdown
+class StatusEnum(str, Enum):
+    pending = "Pending"
+    in_progress = "In Progress"
+    completed = "Completed"
+
+
 @router.post("/story")
 def create_story(
     story: StoryRequest,
@@ -26,7 +34,8 @@ def create_story(
         story_id=uuid.uuid4(),
         feature_id=uuid.UUID(story.feature_id),
         title=story.title,
-        description=story.description
+        description=story.description,
+        status="Pending"     
     )
 
     with Session(engine) as session:
@@ -37,9 +46,10 @@ def create_story(
         "message": "Story created successfully"
     }
 
+
 @router.get("/stories")
 def get_stories(
-    status: str = None,
+    status: StatusEnum = None,
     feature_id: str = None
 ):
 
@@ -48,7 +58,9 @@ def get_stories(
         statement = select(Story)
 
         if status:
-            statement = statement.where(Story.status == status)
+            statement = statement.where(
+                Story.status == status
+            )
 
         if feature_id:
             statement = statement.where(

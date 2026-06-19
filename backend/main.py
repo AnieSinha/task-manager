@@ -10,6 +10,7 @@ from routes.backlog import router as backlog_router
 from routes.feature import router as feature_router
 from routes.story import router as story_router
 from fastapi.middleware.cors import CORSMiddleware
+from routes.task_assignment import router as task_assignment_router
 
 app = FastAPI()
 app.add_middleware(
@@ -27,6 +28,7 @@ app.include_router(backlog_router)
 app.include_router(feature_router)
 app.include_router(story_router)
 app.include_router(task_router)
+app.include_router(task_assignment_router)
 
 @app.get("/")
 def root():

@@ -3,13 +3,26 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 from datetime import datetime
 import uuid
+from enum import Enum
 
 from models import Task
 from utils.database import engine
 from middleware.auth_middleware import verify_token
-from datetime import datetime
 
 router = APIRouter()
+
+
+# ENUMS → Swagger will show dropdown
+class StatusEnum(str, Enum):
+    pending = "Pending"
+    in_progress = "In Progress"
+    completed = "Completed"
+
+
+class PriorityEnum(str, Enum):
+    high = "High"
+    medium = "Medium"
+    low = "Low"
 
 
 class TaskRequest(BaseModel):
@@ -47,10 +60,11 @@ def create_task(
         "message": "Task created successfully"
     }
 
+
 @router.get("/tasks")
 def get_tasks(
-    status: str = None,
-    priority: str = None,
+    status: StatusEnum = None,
+    priority: PriorityEnum = None,
     story_id: str = None
 ):
 
@@ -58,12 +72,15 @@ def get_tasks(
 
         statement = select(Task)
 
+        # Filter by status
         if status:
             statement = statement.where(Task.status == status)
 
+        # Filter by priority
         if priority:
             statement = statement.where(Task.priority == priority)
 
+        # Filter by story_id
         if story_id:
             statement = statement.where(Task.story_id == uuid.UUID(story_id))
 
