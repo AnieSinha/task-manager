@@ -39,11 +39,22 @@ def create_feature(
     }
 
 @router.get("/features")
-def get_features():
+def get_features(
+    status: str = None,
+    backlog_item_id: str = None
+):
 
     with Session(engine) as session:
 
         statement = select(Feature)
+
+        if status:
+            statement = statement.where(Feature.status == status)
+
+        if backlog_item_id:
+            statement = statement.where(
+                Feature.backlog_item_id == uuid.UUID(backlog_item_id)
+            )
 
         features = session.exec(statement).all()
 
