@@ -1,19 +1,20 @@
-from fastapi import Header, HTTPException
+from fastapi import HTTPException, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 
 SECRET_KEY = "mysecretkey"
 ALGORITHM = "HS256"
 
-def verify_token(authorization: str = Header(default=None, alias="Authorization")):
+# This tells Swagger that Bearer token auth exists
+security = HTTPBearer()
 
-    if not authorization:
-        raise HTTPException(
-            status_code=401,
-            detail="Token missing"
-        )
 
+def verify_token(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
     try:
-        token = authorization.split(" ")[1]
+        # Automatically extracts token after "Bearer"
+        token = credentials.credentials
 
         payload = jwt.decode(
             token,

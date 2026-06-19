@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 from datetime import datetime
 import uuid
+from enum import Enum
 
 from models import Backlog_Item
 from utils.database import engine
@@ -11,12 +12,27 @@ from middleware.auth_middleware import verify_token
 router = APIRouter()
 
 
+# Request model for POST API
 class BacklogRequest(BaseModel):
     title: str
     description: str
     priority: str
 
 
+# Enums for Swagger dropdown
+class StatusEnum(str, Enum):
+    pending = "Pending"
+    in_progress = "In Progress"
+    completed = "Completed"
+
+
+class PriorityEnum(str, Enum):
+    high = "High"
+    medium = "Medium"
+    low = "Low"
+
+
+# Create backlog item
 @router.post("/backlog")
 def create_backlog(
     backlog: BacklogRequest,
@@ -43,23 +59,26 @@ def create_backlog(
         "message": "Backlog item created successfully"
     }
 
+
 @router.get("/backlog")
 def get_backlog(
-    status: str = None,
-    priority: str = None
+    status: StatusEnum = None,
+    priority: PriorityEnum = None
 ):
 
     with Session(engine) as session:
 
         statement = select(Backlog_Item)
 
-        # status
         if status:
-            statement = statement.where(Backlog_Item.status == status)
+            statement = statement.where(
+                Backlog_Item.status == status
+            )
 
-        # priority
         if priority:
-            statement = statement.where(Backlog_Item.priority == priority)
+            statement = statement.where(
+                Backlog_Item.priority == priority
+            )
 
         backlog_items = session.exec(statement).all()
 

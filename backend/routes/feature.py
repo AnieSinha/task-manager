@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlmodel import Session, select
 import uuid
+from enum import Enum
 
 from models import Feature
 from utils.database import engine
@@ -10,12 +11,21 @@ from middleware.auth_middleware import verify_token
 router = APIRouter()
 
 
+# Request model for POST API
 class FeatureRequest(BaseModel):
     backlog_item_id: str
     title: str
     description: str
 
 
+# Enum for Swagger dropdown
+class StatusEnum(str, Enum):
+    pending = "Pending"
+    in_progress = "In Progress"
+    completed = "Completed"
+
+
+# Create feature
 @router.post("/feature")
 def create_feature(
     feature: FeatureRequest,
@@ -38,9 +48,10 @@ def create_feature(
         "message": "Feature created successfully"
     }
 
+
 @router.get("/features")
 def get_features(
-    status: str = None,
+    status: StatusEnum = None,
     backlog_item_id: str = None
 ):
 
@@ -49,7 +60,9 @@ def get_features(
         statement = select(Feature)
 
         if status:
-            statement = statement.where(Feature.status == status)
+            statement = statement.where(
+                Feature.status == status
+            )
 
         if backlog_item_id:
             statement = statement.where(
