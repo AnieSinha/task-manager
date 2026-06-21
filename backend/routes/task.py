@@ -87,3 +87,48 @@ def get_tasks(
         tasks = session.exec(statement).all()
 
         return tasks
+class TaskUpdateRequest(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    status: str | None = None
+    priority: str | None = None
+    due_date: datetime | None = None
+
+
+@router.get("/tasks/{task_id}")
+def get_task(task_id: str):
+    from fastapi import HTTPException
+    with Session(engine) as session:
+        item = session.get(Task, uuid.UUID(task_id))
+        if not item:
+            raise HTTPException(status_code=404, detail="Task not found")
+        return item
+
+
+@router.patch("/tasks/{task_id}")
+def update_task(task_id: str, payload: TaskUpdateRequest, payload_user=Depends(verify_token)):
+    from fastapi import HTTPException
+    with Session(engine) as session:
+        item = session.get(Task, uuid.UUID(task_id))
+        if not item:
+            raise HTTPException(status_code=404, detail="Task not found")
+        update_data = payload.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(item, key, value)
+        item.updated_at = datetime.now()
+        session.add(item)
+        session.commit()
+        session.refresh(item)
+        return item
+
+
+@router.delete("/tasks/{task_id}")
+def delete_task(task_id: str, payload_user=Depends(verify_token)):
+    from fastapi import HTTPException
+    with Session(engine) as session:
+        item = session.get(Task, uuid.UUID(task_id))
+        if not item:
+            raise HTTPException(status_code=404, detail="Task not found")
+        session.delete(item)
+        session.commit()
+        return {"message": "Task deleted"}

@@ -4,6 +4,7 @@ from sqlmodel import SQLModel
 from routes.auth import router as auth_router
 from routes.task import router as task_router
 
+from routes.assignment import router as assignment_router
 from utils.database import engine
 from models import *
 from routes.backlog import router as backlog_router

@@ -72,3 +72,45 @@ def get_features(
         features = session.exec(statement).all()
 
         return features
+class FeatureUpdateRequest(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    status: str | None = None
+
+
+@router.get("/feature/{feature_id}")
+def get_feature(feature_id: str):
+    from fastapi import HTTPException
+    with Session(engine) as session:
+        item = session.get(Feature, uuid.UUID(feature_id))
+        if not item:
+            raise HTTPException(status_code=404, detail="Feature not found")
+        return item
+
+
+@router.patch("/feature/{feature_id}")
+def update_feature(feature_id: str, payload: FeatureUpdateRequest, payload_user=Depends(verify_token)):
+    from fastapi import HTTPException
+    with Session(engine) as session:
+        item = session.get(Feature, uuid.UUID(feature_id))
+        if not item:
+            raise HTTPException(status_code=404, detail="Feature not found")
+        update_data = payload.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(item, key, value)
+        session.add(item)
+        session.commit()
+        session.refresh(item)
+        return item
+
+
+@router.delete("/feature/{feature_id}")
+def delete_feature(feature_id: str, payload_user=Depends(verify_token)):
+    from fastapi import HTTPException
+    with Session(engine) as session:
+        item = session.get(Feature, uuid.UUID(feature_id))
+        if not item:
+            raise HTTPException(status_code=404, detail="Feature not found")
+        session.delete(item)
+        session.commit()
+        return {"message": "Feature deleted"}
