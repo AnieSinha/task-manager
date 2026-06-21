@@ -14,6 +14,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from routes.dashboard import router as dashboard_router
 from routes.task_assignment import router as task_assignment_router
+from routes.comment import router as comment_router
+from routes.notification import router as notification_router
 
 
 app = FastAPI()
@@ -37,6 +39,8 @@ app.include_router(task_router)
 # keep both
 app.include_router(task_assignment_router)
 app.include_router(dashboard_router)
+app.include_router(comment_router)
+app.include_router(notification_router)
 
 
 @app.get("/")

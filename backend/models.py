@@ -83,6 +83,7 @@ class Task(SQLModel, table=True):
     task_id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
     story_id: uuid.UUID = Field(foreign_key="story.story_id")
     parent_task_id: uuid.UUID | None = Field(foreign_key="task.task_id")
+    created_by: uuid.UUID = Field(foreign_key="user.user_id")
     title: str
     description: str
     status: str
@@ -107,6 +108,40 @@ class Task_Assignments(SQLModel, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
     reason: str
+
+
+class Comment(SQLModel, table=True):
+    comment_id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
+    task_id: uuid.UUID = Field(foreign_key="task.task_id")
+    user_id: uuid.UUID = Field(foreign_key="user.user_id")
+    text: str
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+
+class Notification(SQLModel, table=True):
+    notification_id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="user.user_id")
+    message: str
+    is_read: bool = Field(default=False)
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+
+class Activity_Log(SQLModel, table=True):
+    activity_id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="user.user_id")
+    action: str
+    entity_type: str
+    entity_id: uuid.UUID
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
 
 
 # Validation Models
