@@ -3,17 +3,20 @@
 Full-stack task manager with role-based access.
 
 ## Setup
-- Backend: 
-python -m venv .venv
-pip install -r requirements.txt
-cd backend
-uvicorn main:app --reload
 
-- Frontend: cd frontend → npm install
-npm run dev
+- Backend:
+  ```bash
+  cd backend
+  uvicorn app.main:app --reload
+  ```
+- Frontend:
+  ```bash
+  cd frontend
+  npm run dev
+  ```
 
-## Using Docker
-
-docker compose up -d --build
-
+- Docker:
+```bash
+docker compose up -d
 docker compose down
+```

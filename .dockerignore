@@ -1,2 +1,9 @@
 .venv
 .env
+.vscode
+__pycache__
+*.pyc
+.git
+.gitignore
+
+frontend/

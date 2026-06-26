@@ -1,43 +1,137 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { useAuth } from './context/AuthContext'
-import { Navbar } from './components/Navbar'
-import Login from './pages/Login'
-import Signup from './pages/Signup'
-import Dashboard from './pages/Dashboard'
-import Backlog from './pages/Backlog'
-import Features from './pages/Features'
-import Stories from './pages/Stories'
-import Tasks from './pages/Tasks'
+import { useState, useCallback } from 'react';
+import { AuthProvider, useAuth } from './context/AuthContext.jsx';
+import { ToastProvider } from './context/ToastContext.jsx';
+import { SearchProvider } from './context/SearchContext.jsx';
+import { Sidebar } from './components/layout/Sidebar.jsx';
+import { TopBar } from './components/layout/TopBar.jsx';
+import { QuickCreateModal } from './components/modals/QuickCreateModal.jsx';
+import { NotificationsPanel } from './components/modals/NotificationsPanel.jsx';
+import { ProfilePanel } from './components/modals/ProfilePanel.jsx';
+import { KanbanView } from './views/KanbanView.jsx';
+import { TeamView } from './views/TeamView.jsx';
+import { MetricsView } from './views/MetricsView.jsx';
+import { SettingsView } from './views/SettingsView.jsx';
+import { LoginPage } from './views/LoginPage.jsx';
+import { SignupPage } from './views/SignupPage.jsx';
+import { EmptyState } from './components/ui/EmptyState.jsx';
 
-function Protected({ children }) {
-  const { isAuthed } = useAuth()
-  if (!isAuthed) return <Navigate to="/login" replace />
-  return children
+const KANBAN_VIEWS = ['backlogs', 'features', 'stories', 'tasks'];
+
+const VIEW_LABELS = {
+  backlogs: 'Backlogs', features: 'Features', stories: 'Stories',
+  tasks: 'Tasks', team: 'Team', metrics: 'Metrics', settings: 'Settings',
+};
+
+// ── Workspace router ──────────────────────────────────────────────────────────
+function WorkspaceContent({ currentView, onNavigate }) {
+  if (KANBAN_VIEWS.includes(currentView)) {
+    return <KanbanView viewType={currentView} onNavigate={onNavigate} />;
+  }
+  switch (currentView) {
+    case 'team': return <TeamView />;
+    case 'metrics': return <MetricsView />;
+    case 'settings': return <SettingsView />;
+    default:
+      return (
+        <EmptyState
+          icon="bx-cog"
+          title={`${VIEW_LABELS[currentView] ?? currentView} Dashboard`}
+          body="This section is coming soon."
+        />
+      );
+  }
 }
 
+// ── Authenticated shell ───────────────────────────────────────────────────────
+function AppShell() {
+  const [currentView, setCurrentView] = useState('backlogs');
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [boardKey, setBoardKey] = useState(0);
+
+  const navigate = useCallback((view) => {
+    setCurrentView(view);
+  }, []);
+
+  const handleCreated = useCallback((type) => {
+    navigate(type);
+    setBoardKey(k => k + 1);
+  }, [navigate]);
+
+  return (
+    <div className="app-container">
+      <Sidebar currentView={currentView} onNavigate={navigate} />
+
+      <div className="main-wrapper">
+        {/* TopBar now receives onNavigate so SearchBar can drive navigation */}
+        <TopBar
+          onNavigate={navigate}
+          onQuickCreate={() => setQuickCreateOpen(true)}
+          unreadCount={unreadCount}
+          onNotifications={() => { setNotifOpen(true); setProfileOpen(false); }}
+          onProfile={() => { setProfileOpen(true); setNotifOpen(false); }}
+        />
+
+        <main className="main-workspace">
+          <div className="view-header">
+            <h1>{VIEW_LABELS[currentView] ?? currentView}</h1>
+          </div>
+          <WorkspaceContent
+            key={`${currentView}-${boardKey}`}
+            currentView={currentView}
+            onNavigate={navigate}
+          />
+        </main>
+      </div>
+
+      <QuickCreateModal
+        open={quickCreateOpen}
+        currentView={currentView}
+        onClose={() => setQuickCreateOpen(false)}
+        onCreated={handleCreated}
+      />
+      <NotificationsPanel
+        open={notifOpen}
+        onClose={() => setNotifOpen(false)}
+        onUnreadChange={setUnreadCount}
+      />
+      <ProfilePanel
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+      />
+    </div>
+  );
+}
+
+// ── Auth gate ─────────────────────────────────────────────────────────────────
+function AuthGate() {
+  const { token, authChecked } = useAuth();
+  const [authPage, setAuthPage] = useState('login');
+
+  if (!authChecked) {
+    return (
+      <div className="auth-boot">
+        <i className="bx bx-loader-alt bx-spin auth-boot-icon" />
+      </div>
+    );
+  }
+  if (token) return <AppShell />;
+  if (authPage === 'signup') return <SignupPage onGoToLogin={() => setAuthPage('login')} />;
+  return <LoginPage onGoToSignup={() => setAuthPage('signup')} />;
+}
+
+// ── Root ──────────────────────────────────────────────────────────────────────
 export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
-      <Route
-        path="*"
-        element={
-          <div className="app-shell">
-            <Navbar />
-            <main className="content">
-              <Routes>
-                <Route path="/" element={<Protected><Dashboard /></Protected>} />
-                <Route path="/backlog" element={<Protected><Backlog /></Protected>} />
-                <Route path="/backlog/:backlogId/features" element={<Protected><Features /></Protected>} />
-                <Route path="/features/:featureId/stories" element={<Protected><Stories /></Protected>} />
-                <Route path="/stories/:storyId/tasks" element={<Protected><Tasks /></Protected>} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </main>
-          </div>
-        }
-      />
-    </Routes>
-  )
+    <AuthProvider>
+      <ToastProvider>
+        {/* SearchProvider must be inside AuthProvider so API calls have the token */}
+        <SearchProvider>
+          <AuthGate />
+        </SearchProvider>
+      </ToastProvider>
+    </AuthProvider>
+  );
 }
