@@ -1,6 +1,5 @@
 import { request } from './client.js';
 
-// Auth endpoints live at the root, NOT under /api/v1
 const AUTH_BASE = '';
 
 export const auth = {

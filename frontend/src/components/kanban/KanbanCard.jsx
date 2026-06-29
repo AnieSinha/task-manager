@@ -6,7 +6,7 @@ const PARENT_VIEW = { features: 'backlogs', stories: 'features', tasks: 'stories
 function formatDate(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
-  return isNaN(d) ? iso : d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  return isNaN(d) ? iso : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 /**
