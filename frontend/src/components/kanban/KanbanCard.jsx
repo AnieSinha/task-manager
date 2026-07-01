@@ -1,12 +1,22 @@
-import { useRef, useState } from 'react';
-import { Badge } from '../ui/Badge.jsx';
+import { useRef, useState } from "react";
+import { Badge } from "../ui/Badge.jsx";
 
-const PARENT_VIEW = { features: 'backlogs', stories: 'features', tasks: 'stories' };
+const PARENT_VIEW = {
+  features: "backlogs",
+  stories: "features",
+  tasks: "stories",
+};
 
 function formatDate(iso) {
-  if (!iso) return '—';
+  if (!iso) return "—";
   const d = new Date(iso);
-  return isNaN(d) ? iso : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  return isNaN(d)
+    ? iso
+    : d.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
 }
 
 /**
@@ -17,28 +27,36 @@ function formatDate(iso) {
  *
  * @param {{ viewType, item, onDragStart, onNavigate, onCardClick }} props
  */
-export function KanbanCard({ viewType, item, onDragStart, onNavigate, onCardClick }) {
+export function KanbanCard({
+  viewType,
+  item,
+  onDragStart,
+  onNavigate,
+  onCardClick,
+}) {
   const cardRef = useRef(null);
-  const dragMoved = useRef(false);   // true once dragstart fires
+  const dragMoved = useRef(false); // true once dragstart fires
   const parentView = PARENT_VIEW[viewType];
 
   const handleDragStart = (e) => {
-    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.effectAllowed = "move";
     dragMoved.current = true;
-    cardRef.current?.classList.add('dragging');
+    cardRef.current?.classList.add("dragging");
     onDragStart(item.id);
   };
 
   const handleDragEnd = () => {
-    cardRef.current?.classList.remove('dragging');
+    cardRef.current?.classList.remove("dragging");
     // Reset after a tick so the click handler (which fires after dragend) can read it
-    setTimeout(() => { dragMoved.current = false; }, 0);
+    setTimeout(() => {
+      dragMoved.current = false;
+    }, 0);
   };
 
   const handleClick = (e) => {
     // Don't open modal if the user was dragging or clicked the parent breadcrumb
     if (dragMoved.current) return;
-    if (e.target.closest('.card-parent-link')) return;
+    if (e.target.closest(".card-parent-link")) return;
     onCardClick?.(item);
   };
 
@@ -52,22 +70,24 @@ export function KanbanCard({ viewType, item, onDragStart, onNavigate, onCardClic
       onClick={handleClick}
       role="button"
       tabIndex={0}
-      onKeyDown={e => e.key === 'Enter' && onCardClick?.(item)}
+      onKeyDown={(e) => e.key === "Enter" && onCardClick?.(item)}
       aria-label={`Open ${item.title}`}
     >
       {/* Parent breadcrumb */}
       {item.parentTitle && (
         <button
           className="card-parent-link"
-          onClick={e => { e.stopPropagation(); onNavigate?.(parentView); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onNavigate?.(parentView);
+          }}
         >
-          <i className="bx bx-link" />
-          {' '}{item.parentTitle}
+          <i className="bx bx-link" /> {item.parentTitle}
         </button>
       )}
 
       {/* Subtask badge */}
-      {viewType === 'tasks' && item.parentTaskId && (
+      {viewType === "tasks" && item.parentTaskId && (
         <span className="subtask-indicator">
           <i className="bx bx-git-branch" /> Subtask
         </span>
@@ -77,17 +97,17 @@ export function KanbanCard({ viewType, item, onDragStart, onNavigate, onCardClic
       <div className="card-desc">{item.description}</div>
 
       {/* Backlogs meta */}
-      {viewType === 'backlogs' && (
+      {viewType === "backlogs" && (
         <div className="card-meta">
           <Badge priority={item.priority} />
           <span className="card-owner">
-            <i className="bx bx-user" /> {item.creatorName ?? '—'}
+            <i className="bx bx-user" /> {item.creatorName ?? "—"}
           </span>
         </div>
       )}
 
       {/* Tasks meta */}
-      {viewType === 'tasks' && (
+      {viewType === "tasks" && (
         <div className="card-meta">
           <div className="card-task-footer">
             <div className="card-task-row">
@@ -98,7 +118,7 @@ export function KanbanCard({ viewType, item, onDragStart, onNavigate, onCardClic
             </div>
             <div className="card-task-row">
               <span className="card-task-assigned">
-                Assigned: <b>{item.assigneeName ?? 'Unassigned'}</b>
+                Assigned: <b>{item.assigneeName ?? "Unassigned"}</b>
               </span>
               {item.updatedAt && (
                 <span className="card-date">

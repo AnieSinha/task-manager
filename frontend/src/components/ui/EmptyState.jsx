@@ -2,7 +2,7 @@
  * Shared empty / loading / error states used across views.
  */
 
-export function EmptyState({ icon = 'bx-inbox', title, body, action }) {
+export function EmptyState({ icon = "bx-inbox", title, body, action }) {
   return (
     <div className="empty-view-box">
       <i className={`bx ${icon}`} />
@@ -33,7 +33,7 @@ export function ErrorState({ message, onRetry }) {
       icon="bx-error-circle"
       title="Something went wrong"
       body={message}
-      action={onRetry ? { label: 'Retry', onClick: onRetry } : undefined}
+      action={onRetry ? { label: "Retry", onClick: onRetry } : undefined}
     />
   );
 }

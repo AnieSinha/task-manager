@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 const TYPE_ICONS = {
-  backlog: 'bx-archive',
-  feature: 'bx-rocket',
-  story:   'bx-book-bookmark',
-  task:    'bx-check-square',
-  team:    'bx-user',
+  backlog: "bx-archive",
+  feature: "bx-rocket",
+  story: "bx-book-bookmark",
+  task: "bx-check-square",
+  team: "bx-user",
 };
 
 /**
@@ -19,7 +19,9 @@ function Highlight({ text, query }) {
   return (
     <>
       {text.slice(0, idx)}
-      <mark className="search-highlight">{text.slice(idx, idx + query.length)}</mark>
+      <mark className="search-highlight">
+        {text.slice(idx, idx + query.length)}
+      </mark>
       {text.slice(idx + query.length)}
     </>
   );
@@ -36,12 +38,20 @@ function Highlight({ text, query }) {
  *   isLoading:   boolean
  * }} props
  */
-export function SearchDropdown({ groups, flat, query, activeIndex, onHover, onSelect, isLoading }) {
+export function SearchDropdown({
+  groups,
+  flat,
+  query,
+  activeIndex,
+  onHover,
+  onSelect,
+  isLoading,
+}) {
   const activeRef = useRef(null);
 
   // Scroll active item into view when keyboard navigates
   useEffect(() => {
-    activeRef.current?.scrollIntoView({ block: 'nearest' });
+    activeRef.current?.scrollIntoView({ block: "nearest" });
   }, [activeIndex]);
 
   if (isLoading) {
@@ -71,7 +81,7 @@ export function SearchDropdown({ groups, flat, query, activeIndex, onHover, onSe
 
   return (
     <div className="search-dropdown" role="listbox">
-      {groups.map(group => (
+      {groups.map((group) => (
         <div key={group.type} className="search-group">
           <div className="search-group-label">
             <i className={`bx ${TYPE_ICONS[group.type]}`} />
@@ -79,14 +89,14 @@ export function SearchDropdown({ groups, flat, query, activeIndex, onHover, onSe
             <span className="search-group-count">{group.items.length}</span>
           </div>
 
-          {group.items.map(record => {
+          {group.items.map((record) => {
             const thisIdx = flatIdx++;
             const isActive = thisIdx === activeIndex;
             return (
               <div
                 key={record.id}
                 ref={isActive ? activeRef : null}
-                className={`search-result${isActive ? ' active' : ''}`}
+                className={`search-result${isActive ? " active" : ""}`}
                 role="option"
                 aria-selected={isActive}
                 onMouseEnter={() => onHover(thisIdx)}
@@ -110,9 +120,16 @@ export function SearchDropdown({ groups, flat, query, activeIndex, onHover, onSe
       ))}
 
       <div className="search-dropdown-footer">
-        <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
-        <span><kbd>↵</kbd> go to view</span>
-        <span><kbd>Esc</kbd> close</span>
+        <span>
+          <kbd>↑</kbd>
+          <kbd>↓</kbd> navigate
+        </span>
+        <span>
+          <kbd>↵</kbd> go to view
+        </span>
+        <span>
+          <kbd>Esc</kbd> close
+        </span>
       </div>
     </div>
   );
