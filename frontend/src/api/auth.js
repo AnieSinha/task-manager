@@ -1,6 +1,6 @@
-import { request } from './client.js';
+import { request } from "./client.js";
 
-const AUTH_BASE = '';
+const AUTH_BASE = "";
 
 export const auth = {
   /**
@@ -9,26 +9,35 @@ export const auth = {
    * Returns { access_token, token_type }
    */
   login: (email, password) =>
-    request('/login/access-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ username: email, password }),
-    }, {}, true /* useRootBase */),
+    request(
+      "/login/access-token",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ username: email, password }),
+      },
+      {},
+      true /* useRootBase */,
+    ),
 
   /**
    * POST /signup — JSON body { name, email, password }
    * Returns UserPublic
    */
   signup: (name, email, password) =>
-    request('/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password }),
-    }, {}, true),
+    request(
+      "/signup",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      },
+      {},
+      true,
+    ),
 
   /**
    * POST /login/test-token — verifies the current token, returns UserPublic.
    */
-  testToken: () =>
-    request('/login/test-token', { method: 'POST' }, {}, true),
+  testToken: () => request("/login/test-token", { method: "POST" }, {}, true),
 };

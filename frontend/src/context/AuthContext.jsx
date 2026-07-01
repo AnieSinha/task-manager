@@ -1,5 +1,11 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { auth } from '../api/index.js';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { auth } from "../api/index.js";
 
 const AuthContext = createContext(null);
 
@@ -10,13 +16,15 @@ const AuthContext = createContext(null);
  *  authChecked=true, token set  → authenticated    → show AppShell
  */
 export function AuthProvider({ children }) {
-  const [token, setTokenState] = useState(() => sessionStorage.getItem('aw_token'));
+  const [token, setTokenState] = useState(() =>
+    sessionStorage.getItem("aw_token"),
+  );
   const [currentUser, setCurrentUser] = useState(null);
   const [authChecked, setAuthChecked] = useState(false); // true once we know auth status
 
   const persistToken = useCallback((t) => {
-    if (t) sessionStorage.setItem('aw_token', t);
-    else sessionStorage.removeItem('aw_token');
+    if (t) sessionStorage.setItem("aw_token", t);
+    else sessionStorage.removeItem("aw_token");
     setTokenState(t);
   }, []);
 
@@ -28,7 +36,8 @@ export function AuthProvider({ children }) {
       setAuthChecked(true);
       return;
     }
-    auth.testToken()
+    auth
+      .testToken()
       .then((user) => {
         setCurrentUser(user);
         setAuthChecked(true);
@@ -45,22 +54,28 @@ export function AuthProvider({ children }) {
    * Log in. Stores the token and fetches the user profile.
    * Throws on bad credentials so the LoginPage can surface the error.
    */
-  const login = useCallback(async (email, password) => {
-    const res = await auth.login(email, password);
-    persistToken(res.access_token);
-    // Hydrate user immediately after token is stored
-    const user = await auth.testToken();
-    setCurrentUser(user);
-  }, [persistToken]);
+  const login = useCallback(
+    async (email, password) => {
+      const res = await auth.login(email, password);
+      persistToken(res.access_token);
+      // Hydrate user immediately after token is stored
+      const user = await auth.testToken();
+      setCurrentUser(user);
+    },
+    [persistToken],
+  );
 
   /**
    * Sign up then automatically log in.
    * Throws on validation errors so SignupPage can surface them.
    */
-  const signup = useCallback(async (name, email, password) => {
-    await auth.signup(name, email, password);
-    await login(email, password);
-  }, [login]);
+  const signup = useCallback(
+    async (name, email, password) => {
+      await auth.signup(name, email, password);
+      await login(email, password);
+    },
+    [login],
+  );
 
   /** Log out — clears token and user; no server call needed (stateless JWT). */
   const logout = useCallback(() => {
@@ -69,7 +84,9 @@ export function AuthProvider({ children }) {
   }, [persistToken]);
 
   return (
-    <AuthContext.Provider value={{ token, currentUser, authChecked, login, signup, logout }}>
+    <AuthContext.Provider
+      value={{ token, currentUser, authChecked, login, signup, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -77,6 +94,6 @@ export function AuthProvider({ children }) {
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');
+  if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
   return ctx;
 };

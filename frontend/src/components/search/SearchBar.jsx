@@ -1,6 +1,6 @@
-import { useEffect, useRef }   from 'react';
-import { useSearch }           from '../../hooks/useSearch.js';
-import { SearchDropdown }      from './SearchDropdown.jsx';
+import { useEffect, useRef } from "react";
+import { useSearch } from "../../hooks/useSearch.js";
+import { SearchDropdown } from "./SearchDropdown.jsx";
 
 /**
  * Self-contained search bar with integrated dropdown.
@@ -10,7 +10,7 @@ import { SearchDropdown }      from './SearchDropdown.jsx';
  */
 export function SearchBar({ onNavigate }) {
   const containerRef = useRef(null);
-  const inputRef     = useRef(null);
+  const inputRef = useRef(null);
 
   const {
     query,
@@ -32,21 +32,21 @@ export function SearchBar({ onNavigate }) {
     const handler = (e) => {
       if (!containerRef.current?.contains(e.target)) close();
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, [close]);
 
   // Global keyboard shortcut: Cmd/Ctrl+K opens search
   useEffect(() => {
     const handler = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         inputRef.current?.focus();
         open();
       }
     };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
   }, [open]);
 
   const handleSelect = (record) => {
@@ -57,7 +57,10 @@ export function SearchBar({ onNavigate }) {
   const showDropdown = isOpen && (isLoading || query.length > 0);
 
   return (
-    <div ref={containerRef} className={`search-container${showDropdown ? ' search-open' : ''}`}>
+    <div
+      ref={containerRef}
+      className={`search-container${showDropdown ? " search-open" : ""}`}
+    >
       <i className="bx bx-search search-icon" />
       <input
         ref={inputRef}
@@ -68,7 +71,7 @@ export function SearchBar({ onNavigate }) {
         autoComplete="off"
         spellCheck={false}
         onFocus={open}
-        onChange={e => setQuery(e.target.value)}
+        onChange={(e) => setQuery(e.target.value)}
         onKeyDown={handleKeyDown}
         aria-label="Global search"
         aria-expanded={showDropdown}
@@ -76,7 +79,14 @@ export function SearchBar({ onNavigate }) {
         role="combobox"
       />
       {query && (
-        <button className="search-clear" onClick={() => { setQuery(''); inputRef.current?.focus(); }} aria-label="Clear search">
+        <button
+          className="search-clear"
+          onClick={() => {
+            setQuery("");
+            inputRef.current?.focus();
+          }}
+          aria-label="Clear search"
+        >
           <i className="bx bx-x" />
         </button>
       )}

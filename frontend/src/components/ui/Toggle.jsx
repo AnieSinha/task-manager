@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 export function Toggle({ defaultChecked = false, onChange }) {
   const [checked, setChecked] = useState(defaultChecked);
