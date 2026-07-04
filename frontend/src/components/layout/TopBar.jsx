@@ -25,6 +25,16 @@ export function TopBar({ currentView, onNavigate, onQuickCreate, unreadCount, on
     (r) => (r?.role_name ?? r) === "Developer",
   );
   const backlogCreateDisabled = currentView === "backlogs" && isDeveloper;
+  
+  // DEBUG
+  if (currentView === "backlogs") {
+    console.log("TopBar Debug:", {
+      user: currentUser?.name,
+      roles: currentUser?.roles,
+      isDeveloper,
+      backlogCreateDisabled,
+    });
+  }
 
   return (
     <header className="top-bar">

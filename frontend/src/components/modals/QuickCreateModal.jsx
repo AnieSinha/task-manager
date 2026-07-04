@@ -19,21 +19,6 @@ export function QuickCreateModal({ open, currentView, onClose, onCreated }) {
   const isDeveloper = (currentUser?.roles ?? []).some(
     (r) => (r?.role_name ?? r) === "Developer",
   );
-  
-  // DEBUGGING: Log role data to browser console only
-  if (open && type === "backlogs") {
-    console.log("🔍 QuickCreateModal Debug:", {
-      user_name: currentUser?.name,
-      user_email: currentUser?.email,
-      roles: currentUser?.roles,
-      isDeveloper,
-    });
-  }
-  
-  // DEBUG: Log to see what's happening
-  console.log("QuickCreateModal - currentUser:", currentUser);
-  console.log("QuickCreateModal - currentUser.roles:", currentUser?.roles);
-  console.log("QuickCreateModal - isDeveloper:", isDeveloper);
 
   const [type, setType] = useState("backlogs");
   const [title, setTitle] = useState("");
