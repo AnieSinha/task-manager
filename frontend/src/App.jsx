@@ -67,6 +67,7 @@ function AppShell() {
       <div className="main-wrapper">
         {/* TopBar now receives onNavigate so SearchBar can drive navigation */}
         <TopBar
+          currentView={currentView}
           onNavigate={navigate}
           onQuickCreate={() => setQuickCreateOpen(true)}
           unreadCount={unreadCount}
