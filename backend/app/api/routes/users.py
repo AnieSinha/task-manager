@@ -122,7 +122,10 @@ def delete_user(user_id: uuid.UUID, session: SessionDep):
     dependencies=[Depends(get_current_active_superuser)],
 )
 def assign_role(user_id: uuid.UUID, body: dict, session: SessionDep):
-    role_id: uuid.UUID = body["role_id"]
+    try:
+        role_id = uuid.UUID(str(body["role_id"]))
+    except (KeyError, ValueError):
+        raise HTTPException(status_code=422, detail="Valid role_id (UUID) is required")
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
