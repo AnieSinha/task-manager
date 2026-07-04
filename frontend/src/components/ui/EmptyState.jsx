@@ -31,7 +31,7 @@ export function ErrorState({ message, onRetry }) {
   return (
     <EmptyState
       icon="bx-error-circle"
-      title="Something went wrong"
+      title="Access Denied"
       body={message}
       action={onRetry ? { label: "Retry", onClick: onRetry } : undefined}
     />
