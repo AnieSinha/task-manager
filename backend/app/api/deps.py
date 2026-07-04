@@ -11,6 +11,8 @@ from app.core.db import engine
 from app.core.config import settings
 from app.models import Role, TokenPayload, User, User_Role
 from app.core import security
+from app.core.permissions import ROLE_PERMISSIONS, Permission
+from app.crud import get_user_roles
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
@@ -48,21 +50,29 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
-def get_current_active_superuser(
-    current_user: CurrentUser, session: SessionDep
-) -> User:
-    # Check if a link exists between this user and the SUPER_USER role
-    is_superuser = session.exec(
-        select(User_Role)
-        .join(Role)
-        .where(
-            User_Role.user_id == current_user.user_id, Role.role_name == "SUPER_USER"
-        )
-    ).first()
+def require_permission(permission: Permission):
 
-    if not is_superuser:
-        raise HTTPException(
-            status_code=403, detail="The user doesn't have enough privileges"
+    def dependency(
+        current_user: CurrentUser,
+        session: SessionDep,
+    ):
+
+        roles: list[tuple[Role, User_Role]] = get_user_roles(
+            session,
+            current_user.user_id,
         )
 
-    return current_user
+        permissions = set()
+
+        for role, ur in roles:
+            permissions |= ROLE_PERMISSIONS.get(role.role_name, set())
+
+        if permission not in permissions:
+            raise HTTPException(
+                status_code=403,
+                detail="Insufficient permissions",
+            )
+
+        return current_user
+
+    return Depends(dependency)

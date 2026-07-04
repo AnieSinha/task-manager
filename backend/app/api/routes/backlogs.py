@@ -3,7 +3,9 @@
 # =============================================================================
 import uuid
 from fastapi import APIRouter, HTTPException
-from app.api.deps import CurrentUser, SessionDep
+
+from app.api.deps import SessionDep, require_permission
+from app.core.permissions import Permission
 from app.models import (
     Backlog_Item,
     BacklogCreate,
@@ -22,8 +24,9 @@ def _backlog_public(item: Backlog_Item, session) -> BacklogPublic:
     from app.models import User
 
     creator = session.get(User, item.created_by)
+
     return BacklogPublic(
-        backlog_item_id=item.backlog_item_id,  # type: ignore[arg-type]
+        backlog_item_id=item.backlog_item_id,
         title=item.title,
         description=item.description,
         priority=item.priority,
@@ -39,7 +42,7 @@ def _backlog_public(item: Backlog_Item, session) -> BacklogPublic:
 @router_backlogs.get("", response_model=dict)
 def list_backlogs(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user=require_permission(Permission.BACKLOG_VIEW),
     status: str | None = None,
     priority: str | None = None,
     created_by: uuid.UUID | None = None,
@@ -58,6 +61,7 @@ def list_backlogs(
         order_by=order_by,
         direction=direction,
     )
+
     return {
         "data": [_backlog_public(i, session) for i in items],
         "total": total,
@@ -67,18 +71,31 @@ def list_backlogs(
 
 
 @router_backlogs.post("", status_code=201, response_model=BacklogPublic)
-def create_backlog(body: BacklogCreate, session: SessionDep, current_user: CurrentUser):
+def create_backlog(
+    body: BacklogCreate,
+    session: SessionDep,
+    current_user=require_permission(Permission.BACKLOG_CREATE),
+):
     item = crud.create_backlog(
-        session=session, data=body, created_by=current_user.user_id  # type: ignore[arg-type]
+        session=session,
+        data=body,
+        created_by=current_user.user_id,
     )
+
     return _backlog_public(item, session)
 
 
 @router_backlogs.get("/{backlog_item_id}", response_model=BacklogPublic)
-def get_backlog(backlog_item_id: uuid.UUID, session: SessionDep, _: CurrentUser):
+def get_backlog(
+    backlog_item_id: uuid.UUID,
+    session: SessionDep,
+    current_user=require_permission(Permission.BACKLOG_VIEW),
+):
     item = session.get(Backlog_Item, backlog_item_id)
+
     if not item:
-        raise HTTPException(status_code=404, detail="Backlog item not found")
+        raise HTTPException(404, "Backlog item not found")
+
     return _backlog_public(item, session)
 
 
@@ -87,29 +104,45 @@ def patch_backlog(
     backlog_item_id: uuid.UUID,
     body: BacklogUpdate,
     session: SessionDep,
-    _: CurrentUser,
+    current_user=require_permission(Permission.BACKLOG_UPDATE),
 ):
     item = session.get(Backlog_Item, backlog_item_id)
+
     if not item:
-        raise HTTPException(status_code=404, detail="Backlog item not found")
-    updated = crud.update_backlog(session=session, item=item, data=body)
+        raise HTTPException(404, "Backlog item not found")
+
+    updated = crud.update_backlog(
+        session=session,
+        item=item,
+        data=body,
+    )
+
     return _backlog_public(updated, session)
 
 
 @router_backlogs.delete("/{backlog_item_id}", status_code=204)
-def delete_backlog(backlog_item_id: uuid.UUID, session: SessionDep, _: CurrentUser):
+def delete_backlog(
+    backlog_item_id: uuid.UUID,
+    session: SessionDep,
+    current_user=require_permission(Permission.BACKLOG_DELETE),
+):
     item = session.get(Backlog_Item, backlog_item_id)
+
     if not item:
-        raise HTTPException(status_code=404, detail="Backlog item not found")
+        raise HTTPException(404, "Backlog item not found")
+
     child = session.exec(
         __import__("sqlmodel")
         .select(Feature)
         .where(Feature.backlog_item_id == backlog_item_id)
     ).first()
+
     if child:
         raise HTTPException(
-            status_code=409, detail="Backlog item has dependent features"
+            status_code=409,
+            detail="Backlog item has dependent features",
         )
+
     crud.delete_backlog(session=session, item=item)
 
 
@@ -117,14 +150,16 @@ def delete_backlog(backlog_item_id: uuid.UUID, session: SessionDep, _: CurrentUs
 def list_features_under_backlog(
     backlog_item_id: uuid.UUID,
     session: SessionDep,
-    _: CurrentUser,
+    current_user=require_permission(Permission.FEATURE_VIEW),
     status: str | None = None,
     limit: int = 25,
     offset: int = 0,
 ):
     item = session.get(Backlog_Item, backlog_item_id)
+
     if not item:
-        raise HTTPException(status_code=404, detail="Backlog item not found")
+        raise HTTPException(404, "Backlog item not found")
+
     feats, total = crud.get_features(
         session=session,
         limit=limit,
@@ -132,9 +167,10 @@ def list_features_under_backlog(
         backlog_item_id=backlog_item_id,
         status=status,
     )
+
     data = [
         FeaturePublic(
-            feature_id=f.feature_id,  # type: ignore[arg-type]
+            feature_id=f.feature_id,
             backlog_item_id=f.backlog_item_id,
             backlog_item_title=item.title,
             title=f.title,
@@ -143,4 +179,10 @@ def list_features_under_backlog(
         )
         for f in feats
     ]
-    return {"data": data, "total": total, "limit": limit, "offset": offset}
+
+    return {
+        "data": data,
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }

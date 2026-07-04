@@ -154,7 +154,7 @@ def remove_user_role(
 
 
 def get_user_roles(
-    *, session: Session, user_id: uuid.UUID
+    session: Session, user_id: uuid.UUID
 ) -> list[tuple[Role, User_Role]]:
     rows = session.exec(
         select(Role, User_Role)
