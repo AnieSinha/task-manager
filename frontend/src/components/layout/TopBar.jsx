@@ -20,11 +20,11 @@ export function TopBar({ currentView, onNavigate, onQuickCreate, unreadCount, on
   const { currentUser } = useAuth();
   const avatar = initials(currentUser?.name);
 
-  // Developers are not permitted to create backlog items (RBAC restriction).
+  // Developers are not permitted to create backlog, feature, story, or task items (RBAC restriction).
   const isDeveloper = (currentUser?.roles ?? []).some(
     (r) => (r?.role_name ?? r) === "Developer",
   );
-  const backlogCreateDisabled = currentView === "backlogs" && isDeveloper;
+  const backlogCreateDisabled = isDeveloper;
   
   // DEBUG
   if (currentView === "backlogs") {
@@ -46,7 +46,7 @@ export function TopBar({ currentView, onNavigate, onQuickCreate, unreadCount, on
           className="btn btn-primary" 
           onClick={onQuickCreate} 
           disabled={backlogCreateDisabled}
-          title={backlogCreateDisabled ? "Developers cannot create backlog items" : "Quick Create Item"}
+          title={backlogCreateDisabled ? "Developers cannot create items in this section" : "Quick Create Item"}
         >
           <i className="bx bx-plus" /><span>Quick Create</span>
         </button>

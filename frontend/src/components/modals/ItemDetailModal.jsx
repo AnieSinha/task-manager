@@ -118,11 +118,12 @@ function DeleteConfirm({ item, viewType, onCancel, onConfirm, deleting }) {
 export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDelete, onNavigate }) {
   const { currentUser } = useAuth();
 
-  // Developers are not permitted to edit or delete backlog items (RBAC restriction).
+  // Developers are not permitted to edit or delete backlog, feature, story, or task items (RBAC restriction).
   const isDeveloper = (currentUser?.roles ?? []).some(
     (r) => (r?.role_name ?? r) === 'Developer',
   );
-  const backlogActionsLocked = viewType === 'backlogs' && isDeveloper;
+  const backlogActionsLocked =
+    ['backlogs', 'features', 'stories', 'tasks'].includes(viewType) && isDeveloper;
 
   const [editing, setEditing] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -437,7 +438,7 @@ export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDel
                   className="btn btn-ghost detail-footer-delete"
                   onClick={() => setConfirming(true)}
                   disabled={backlogActionsLocked}
-                  title={backlogActionsLocked ? 'Developers cannot delete backlog items' : undefined}
+                  title={backlogActionsLocked ? 'Developers cannot delete items in this section' : undefined}
                 >
                   <i className="bx bx-trash" /> Delete
                 </button>
@@ -445,7 +446,7 @@ export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDel
                   className="btn btn-primary"
                   onClick={() => setEditing(true)}
                   disabled={backlogActionsLocked}
-                  title={backlogActionsLocked ? 'Developers cannot edit backlog items' : undefined}
+                  title={backlogActionsLocked ? 'Developers cannot edit items in this section' : undefined}
                 >
                   <i className="bx bx-edit" /> Edit
                 </button>

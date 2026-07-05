@@ -15,12 +15,13 @@ export function QuickCreateModal({ open, currentView, onClose, onCreated }) {
   const { currentUser } = useAuth();
   const titleRef = useRef(null);
 
-  // Developers are not permitted to create backlog items (RBAC restriction).
+  // Developers are not permitted to create backlog, feature, story, or task items (RBAC restriction).
   const isDeveloper = (currentUser?.roles ?? []).some(
     (r) => (r?.role_name ?? r) === "Developer",
   );
 
   const [type, setType] = useState("backlogs");
+  const createDisabledForDeveloper = KANBAN_VIEWS.includes(type) && isDeveloper;
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [priority, setPriority] = useState("medium");
@@ -373,8 +374,8 @@ export function QuickCreateModal({ open, currentView, onClose, onCreated }) {
           <button
             className="btn btn-primary"
             onClick={handleSubmit}
-            disabled={saving || (type === "backlogs" && isDeveloper)}
-            title={type === "backlogs" && isDeveloper ? "Developers cannot create backlog items" : undefined}
+            disabled={saving || createDisabledForDeveloper}
+            title={createDisabledForDeveloper ? "Developers cannot create items in this section" : undefined}
           >
             <i className="bx bx-plus" /> {saving ? "Creating…" : "Create"}
           </button>
