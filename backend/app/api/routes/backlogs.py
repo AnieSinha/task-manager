@@ -24,6 +24,7 @@ def _backlog_public(item: Backlog_Item, session) -> BacklogPublic:
     creator = session.get(User, item.created_by)
     return BacklogPublic(
         backlog_item_id=item.backlog_item_id,  # type: ignore[arg-type]
+        project_id=item.project_id,
         title=item.title,
         description=item.description,
         priority=item.priority,

@@ -79,6 +79,50 @@ class User_Role(SQLModel, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
 
+# ---------------------------------------------------------------------------
+# Projects
+# ---------------------------------------------------------------------------
+
+class ProjectCreate(SQLModel):
+    title: str
+    description: str
+    status: str  # active | completed | archived
+
+
+class ProjectUpdate(SQLModel):
+    title: str | None = None
+    description: str | None = None
+    status: str | None = None
+
+
+class ProjectCreatedBy(SQLModel):
+    user_id: uuid.UUID
+    name: str | None
+
+
+class ProjectPublic(SQLModel):
+    project_id: uuid.UUID
+    title: str
+    description: str
+    status: str
+    created_by: ProjectCreatedBy
+    created_at: datetime | None
+
+
+class Project(SQLModel, table=True):
+    project_id: uuid.UUID | None = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+    )
+    created_by: uuid.UUID = Field(foreign_key="user.user_id")
+    title: str
+    description: str
+    status: str
+
+    created_at: datetime | None = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
 
 # ---------------------------------------------------------------------------
 # Backlogs
@@ -86,6 +130,7 @@ class User_Role(SQLModel, table=True):
 
 
 class BacklogCreate(SQLModel):
+    project_id: uuid.UUID
     title: str
     description: str
     priority: str  # low | medium | high
@@ -106,6 +151,7 @@ class BacklogCreatedBy(SQLModel):
 
 class BacklogPublic(SQLModel):
     backlog_item_id: uuid.UUID
+    project_id: uuid.UUID
     title: str
     description: str
     priority: str
@@ -119,6 +165,7 @@ class Backlog_Item(SQLModel, table=True):
         default_factory=uuid.uuid4, primary_key=True
     )
     created_by: uuid.UUID = Field(foreign_key="user.user_id")
+    project_id: uuid.UUID = Field(foreign_key="project.project_id")
     title: str
     description: str
     priority: str
