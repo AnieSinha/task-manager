@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { backlogs, features, stories, tasks, users } from "../../api/index.js";
 import { useToast } from "../../context/ToastContext.jsx";
 import { useSearchContext } from "../../context/SearchContext.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
 
 const KANBAN_VIEWS = ["backlogs", "features", "stories", "tasks"];
 
@@ -11,9 +12,16 @@ const KANBAN_VIEWS = ["backlogs", "features", "stories", "tasks"];
 export function QuickCreateModal({ open, currentView, onClose, onCreated }) {
   const { showToast } = useToast();
   const { invalidate } = useSearchContext();
+  const { currentUser } = useAuth();
   const titleRef = useRef(null);
 
+  // Developers are not permitted to create backlog, feature, story, or task items (RBAC restriction).
+  const isDeveloper = (currentUser?.roles ?? []).some(
+    (r) => (r?.role_name ?? r) === "Developer",
+  );
+
   const [type, setType] = useState("backlogs");
+  const createDisabledForDeveloper = KANBAN_VIEWS.includes(type) && isDeveloper;
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [priority, setPriority] = useState("medium");
@@ -366,7 +374,8 @@ export function QuickCreateModal({ open, currentView, onClose, onCreated }) {
           <button
             className="btn btn-primary"
             onClick={handleSubmit}
-            disabled={saving}
+            disabled={saving || createDisabledForDeveloper}
+            title={createDisabledForDeveloper ? "Developers cannot create items in this section" : undefined}
           >
             <i className="bx bx-plus" /> {saving ? "Creating…" : "Create"}
           </button>
