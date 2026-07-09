@@ -516,6 +516,14 @@ kbd {
   color: var(--colors-primary);
 }
 
+.btn:disabled {
+  background-color: var(--colors-surface-2);
+  border-color: var(--colors-border);
+  color: var(--colors-secondary);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .text-btn {
   background: none;
   border: none;

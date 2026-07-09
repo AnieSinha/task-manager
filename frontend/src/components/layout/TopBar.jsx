@@ -8,6 +8,7 @@ function initials(name) {
 
 /**
  * @param {{
+ *   currentView:     string,
  *   onNavigate:      (view: string) => void,
  *   onQuickCreate:   () => void,
  *   unreadCount:     number,
@@ -15,9 +16,25 @@ function initials(name) {
  *   onProfile:       () => void,
  * }} props
  */
-export function TopBar({ onNavigate, onQuickCreate, unreadCount, onNotifications, onProfile }) {
+export function TopBar({ currentView, onNavigate, onQuickCreate, unreadCount, onNotifications, onProfile }) {
   const { currentUser } = useAuth();
   const avatar = initials(currentUser?.name);
+
+  // Developers are not permitted to create backlog, feature, story, or task items (RBAC restriction).
+  const isDeveloper = (currentUser?.roles ?? []).some(
+    (r) => (r?.role_name ?? r) === "Developer",
+  );
+  const backlogCreateDisabled = isDeveloper;
+  
+  // DEBUG
+  if (currentView === "backlogs") {
+    console.log("TopBar Debug:", {
+      user: currentUser?.name,
+      roles: currentUser?.roles,
+      isDeveloper,
+      backlogCreateDisabled,
+    });
+  }
 
   return (
     <header className="top-bar">
@@ -25,7 +42,12 @@ export function TopBar({ onNavigate, onQuickCreate, unreadCount, onNotifications
       <SearchBar onNavigate={onNavigate} />
 
       <div className="top-bar-actions">
-        <button className="btn btn-primary" onClick={onQuickCreate} title="Quick Create Item">
+        <button 
+          className="btn btn-primary" 
+          onClick={onQuickCreate} 
+          disabled={backlogCreateDisabled}
+          title={backlogCreateDisabled ? "Developers cannot create items in this section" : "Quick Create Item"}
+        >
           <i className="bx bx-plus" /><span>Quick Create</span>
         </button>
 

@@ -4,6 +4,10 @@ from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
 from app.models import (
+    Project,
+    ProjectCreate,
+    ProjectUpdate,
+    ProjectPublic,
     Backlog_Item,
     BacklogCreate,
     BacklogUpdate,
@@ -162,6 +166,66 @@ def get_user_roles(
         .where(User_Role.user_id == user_id)
     ).all()
     return list(rows)
+
+# ---------------------------------------------------------------------------
+# Projects
+# ---------------------------------------------------------------------------
+
+def create_project(
+    *, session: Session, data: ProjectCreate, created_by: uuid.UUID
+) -> Project:
+    project = Project(**data.model_dump(), created_by=created_by)
+    session.add(project)
+    session.commit()
+    session.refresh(project)
+    return project
+
+
+def get_projects(
+    *,
+    session: Session,
+    limit: int,
+    offset: int,
+    status: str | None,
+    created_by: uuid.UUID | None,
+    order_by: str,
+    direction: str,
+):
+    q = select(Project)
+
+    if status:
+        q = q.where(Project.status == status)
+
+    if created_by:
+        q = q.where(Project.created_by == created_by)
+
+    col = getattr(Project, order_by, Project.created_at)
+    q = q.order_by(col.desc() if direction == "desc" else col.asc())
+
+    total = len(session.exec(q).all())
+    items = session.exec(q.offset(offset).limit(limit)).all()
+
+    return items, total
+
+
+def update_project(
+    *, session: Session, project: Project, data: ProjectUpdate
+) -> Project:
+    for k, v in data.model_dump(exclude_unset=True).items():
+        setattr(project, k, v)
+
+    session.add(project)
+    session.commit()
+    session.refresh(project)
+
+    return project
+
+
+def delete_project(
+    *, session: Session, project: Project
+) -> None:
+    session.delete(project)
+    session.commit()
 
 
 # ---------------------------------------------------------------------------

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Badge } from '../ui/Badge.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -115,6 +116,15 @@ function DeleteConfirm({ item, viewType, onCancel, onConfirm, deleting }) {
  * }} props
  */
 export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDelete, onNavigate }) {
+  const { currentUser } = useAuth();
+
+  // Developers are not permitted to edit or delete backlog, feature, story, or task items (RBAC restriction).
+  const isDeveloper = (currentUser?.roles ?? []).some(
+    (r) => (r?.role_name ?? r) === 'Developer',
+  );
+  const backlogActionsLocked =
+    ['backlogs', 'features', 'stories', 'tasks'].includes(viewType) && isDeveloper;
+
   const [editing, setEditing] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -424,10 +434,20 @@ export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDel
               </>
             ) : (
               <>
-                <button className="btn btn-ghost detail-footer-delete" onClick={() => setConfirming(true)}>
+                <button
+                  className="btn btn-ghost detail-footer-delete"
+                  onClick={() => setConfirming(true)}
+                  disabled={backlogActionsLocked}
+                  title={backlogActionsLocked ? 'Developers cannot delete items in this section' : undefined}
+                >
                   <i className="bx bx-trash" /> Delete
                 </button>
-                <button className="btn btn-primary" onClick={() => setEditing(true)}>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setEditing(true)}
+                  disabled={backlogActionsLocked}
+                  title={backlogActionsLocked ? 'Developers cannot edit items in this section' : undefined}
+                >
                   <i className="bx bx-edit" /> Edit
                 </button>
               </>
