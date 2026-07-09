@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { apiForView } from "../api/index.js";
 import { useToast } from "../context/ToastContext.jsx";
 
-function normalise(viewType, raw) {
+export function normalise(viewType, raw) {
   switch (viewType) {
     case "backlogs":
       return {
@@ -48,6 +48,7 @@ function normalise(viewType, raw) {
         parentTaskId: raw.parent_task_id ?? null,
         assigneeName: first?.assigned_to?.name ?? "Unassigned",
         assigneeId: first?.assigned_to?.user_id ?? null,
+        assignmentId: first?.task_assignment_id ?? null,
       };
     }
     default:
@@ -150,6 +151,24 @@ export function useKanban(viewType) {
     [viewType, showToast],
   );
 
+  // ── Re-fetch a single record (used after assignment changes, which happen
+  // via a separate endpoint and aren't reflected by the optimistic patch above) ──
+  const syncRecord = useCallback(
+    async (id) => {
+      const api = apiForView(viewType);
+      if (!api) return null;
+      try {
+        const raw = await api.get(id);
+        const fresh = normalise(viewType, raw);
+        setRecords((prev) => prev.map((r) => (r.id === id ? fresh : r)));
+        return fresh;
+      } catch (err) {
+        return null;
+      }
+    },
+    [viewType],
+  );
+
   return {
     records,
     loading,
@@ -158,5 +177,6 @@ export function useKanban(viewType) {
     handleDrop,
     handleUpdate,
     handleDelete,
+    syncRecord,
   };
 }

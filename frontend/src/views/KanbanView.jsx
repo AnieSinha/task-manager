@@ -11,7 +11,7 @@ import { useKanban } from '../hooks/useKanban.js';
  * @param {{ viewType, searchQuery, onNavigate }} props
  */
 export function KanbanView({ viewType, searchQuery = '', onNavigate }) {
-  const { records, loading, error, refresh, handleDrop, handleUpdate, handleDelete } = useKanban(viewType);
+  const { records, loading, error, refresh, handleDrop, handleUpdate, handleDelete, syncRecord } = useKanban(viewType);
 
   const [selectedItem, setSelectedItem] = useState(null);
 
@@ -52,6 +52,10 @@ export function KanbanView({ viewType, searchQuery = '', onNavigate }) {
         onDelete={async (id) => {
           await handleDelete(id);
           setSelectedItem(null);
+        }}
+        onAssignmentChanged={async (id) => {
+          const fresh = await syncRecord(id);
+          if (fresh) setSelectedItem(fresh);
         }}
         onNavigate={onNavigate}
       />

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Badge } from '../ui/Badge.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { useToast } from '../../context/ToastContext.jsx';
+import { users, tasks } from '../../api/index.js';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -43,6 +45,17 @@ function formatDate(iso) {
   });
 }
 
+/** Date-only display (no time) — used for due dates, which have no meaningful time component. */
+function formatDateOnly(iso) {
+  if (!iso) return '—';
+  const utcIso = iso.endsWith('Z') || iso.match(/[+-]\d{2}:\d{2}$/) ? iso : `${iso}Z`;
+  const d = new Date(utcIso);
+
+  return isNaN(d) ? iso : d.toLocaleDateString('en-US', {
+    year: 'numeric', month: 'short', day: 'numeric',
+  });
+}
+
 // ── Subcomponents ─────────────────────────────────────────────────────────────
 
 /** A single read-only metadata row */
@@ -58,20 +71,20 @@ function MetaRow({ icon, label, children }) {
 }
 
 /** Inline-editable field: shows text normally, input when editing */
-function EditableField({ label, value, editing, type = 'text', options, onChange, inputRef }) {
+function EditableField({ label, value, editing, type = 'text', options, onChange, inputRef, disabled = false, disabledHint }) {
   return (
     <div className="form-group">
       <label className="form-label">{label}</label>
       {!editing ? (
         <p className="detail-field-display">{value || <span className="detail-empty">—</span>}</p>
       ) : type === 'select' ? (
-        <select className="form-select" value={value} onChange={e => onChange(e.target.value)}>
+        <select className="form-select" value={value} onChange={e => onChange(e.target.value)} disabled={disabled} title={disabled ? disabledHint : undefined}>
           {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       ) : type === 'textarea' ? (
-        <textarea className="form-input form-textarea" value={value} onChange={e => onChange(e.target.value)} ref={inputRef} />
+        <textarea className="form-input form-textarea" value={value} onChange={e => onChange(e.target.value)} ref={inputRef} disabled={disabled} title={disabled ? disabledHint : undefined} />
       ) : (
-        <input className="form-input" type={type} value={value} onChange={e => onChange(e.target.value)} ref={inputRef} />
+        <input className="form-input" type={type} value={value} onChange={e => onChange(e.target.value)} ref={inputRef} disabled={disabled} title={disabled ? disabledHint : undefined} />
       )}
     </div>
   );
@@ -115,15 +128,24 @@ function DeleteConfirm({ item, viewType, onCancel, onConfirm, deleting }) {
  *   onNavigate:(view) => void,
  * }} props
  */
-export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDelete, onNavigate }) {
+export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDelete, onAssignmentChanged, onNavigate }) {
   const { currentUser } = useAuth();
+  const { showToast } = useToast();
 
-  // Developers are not permitted to edit or delete backlog, feature, story, or task items (RBAC restriction).
+  // Developers cannot delete or retitle backlog, feature, story, or task items,
+  // but they CAN edit the description (RBAC restriction).
   const isDeveloper = (currentUser?.roles ?? []).some(
     (r) => (r?.role_name ?? r) === 'Developer',
   );
-  const backlogActionsLocked =
-    ['backlogs', 'features', 'stories', 'tasks'].includes(viewType) && isDeveloper;
+  const isRestrictedView = ['backlogs', 'features', 'stories', 'tasks'].includes(viewType);
+  // Developers still cannot delete these item types.
+  const deleteLockedForDeveloper = isRestrictedView && isDeveloper;
+  // Developers CAN edit these item types, but only description + status.
+  // Title, priority, due date, and assignee stay locked.
+  const titleLockedForDeveloper = isRestrictedView && isDeveloper;
+  const priorityLockedForDeveloper = isRestrictedView && isDeveloper;
+  const dueDateLockedForDeveloper = isRestrictedView && isDeveloper;
+  const assigneeLockedForDeveloper = isRestrictedView && isDeveloper;
 
   const [editing, setEditing] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -137,8 +159,18 @@ export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDel
   const [status, setStatus] = useState('to-do');
   const [priority, setPriority] = useState('medium');
   const [dueDate, setDueDate] = useState('');
+  const [assigneeId, setAssigneeId] = useState('');
+  const [teamList, setTeamList] = useState([]);
 
   const titleRef = useRef(null);
+
+  // Load active users once, for the assignee dropdown (tasks only)
+  useEffect(() => {
+    users
+      .list({ is_active: true, limit: 100 })
+      .then((res) => setTeamList(res.data ?? []))
+      .catch(() => {});
+  }, []);
 
   // Sync local state when item changes or modal opens
   useEffect(() => {
@@ -147,6 +179,7 @@ export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDel
     setDesc(item.description ?? '');
     setStatus(item.status ?? 'to-do');
     setPriority(item.priority ?? 'medium');
+    setAssigneeId(item.assigneeId ?? '');
 
     // Parse UTC to local YYYY-MM-DD for the date input
     if (item.dueDate) {
@@ -203,13 +236,33 @@ export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDel
   };
 
   const handleSave = async () => {
-    if (!title.trim()) { titleRef.current?.focus(); return; }
+    if (!titleLockedForDeveloper && !title.trim()) { titleRef.current?.focus(); return; }
     setSaving(true);
-    const patch = { title: title.trim(), description: desc.trim(), status };
+    const patch = { description: desc.trim(), status };
+    if (!titleLockedForDeveloper) patch.title = title.trim();
     if (hasPriority) patch.priority = priority;
     if (viewType === 'tasks' && dueDate) patch.due_date = dueDate;
     try {
       await onUpdate(item.id, patch);
+
+      // Assignment is a separate sub-resource — apply changes only if the assignee actually changed
+      if (viewType === 'tasks' && assigneeId !== (item.assigneeId ?? '')) {
+        try {
+          if (item.assignmentId) {
+            await tasks.assignments.remove(item.id, item.assignmentId);
+          }
+          if (assigneeId) {
+            await tasks.assignments.assign(item.id, assigneeId, 'Reassigned via task detail.');
+          }
+          // Re-fetch the task so the card/modal reflect the real assignee,
+          // instead of relying on stale local state (also fixes assignmentId
+          // so the next reassignment doesn't hit a 409 Conflict).
+          await onAssignmentChanged?.(item.id);
+        } catch (err) {
+          showToast(err.message ?? 'Failed to update assignee.', 'error');
+        }
+      }
+
       setEditing(false);
     } finally {
       setSaving(false);
@@ -221,6 +274,7 @@ export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDel
     setDesc(item.description ?? '');
     setStatus(item.status ?? 'to-do');
     setPriority(item.priority ?? 'medium');
+    setAssigneeId(item.assigneeId ?? '');
 
     if (item.dueDate) {
       const utcIso = item.dueDate.endsWith('Z') || item.dueDate.match(/[+-]\d{2}:\d{2}$/) ? item.dueDate : `${item.dueDate}Z`;
@@ -319,6 +373,8 @@ export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDel
                 editing={editing}
                 onChange={setTitle}
                 inputRef={titleRef}
+                disabled={titleLockedForDeveloper}
+                disabledHint="Developers can only edit the description"
               />
 
               {/* Description */}
@@ -351,6 +407,8 @@ export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDel
                   type="select"
                   options={PRIORITY_OPTIONS}
                   onChange={setPriority}
+                  disabled={priorityLockedForDeveloper}
+                  disabledHint="Developers can only edit the description and status"
                 />
               )}
 
@@ -358,18 +416,40 @@ export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDel
               {viewType === 'tasks' && (
                 <EditableField
                   label="Due Date"
-                  value={editing ? dueDate : formatDate(item.dueDate)}
+                  value={editing ? dueDate : formatDateOnly(item.dueDate)}
                   editing={editing}
                   type="date"
                   onChange={setDueDate}
+                  disabled={dueDateLockedForDeveloper}
+                  disabledHint="Developers can only edit the description and status"
                 />
               )}
 
-              {/* Task: assignee (read-only for now — use Quick Create to reassign) */}
-              {viewType === 'tasks' && !editing && (
-                <MetaRow icon="bx-user" label="Assigned to">
-                  {item.assigneeName ?? 'Unassigned'}
-                </MetaRow>
+              {/* Task: assignee — editable dropdown while editing, read-only otherwise */}
+              {viewType === 'tasks' && (
+                editing ? (
+                  <div className="form-group">
+                    <label className="form-label">Assigned To</label>
+                    <select
+                      className="form-select"
+                      value={assigneeId}
+                      onChange={(e) => setAssigneeId(e.target.value)}
+                      disabled={assigneeLockedForDeveloper}
+                      title={assigneeLockedForDeveloper ? 'Developers can only edit the description and status' : undefined}
+                    >
+                      <option value="">Unassigned</option>
+                      {teamList.map((u) => (
+                        <option key={u.user_id} value={u.user_id}>
+                          {u.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <MetaRow icon="bx-user" label="Assigned to">
+                    {item.assigneeName ?? 'Unassigned'}
+                  </MetaRow>
+                )
               )}
 
               {/* Subtask indicator */}
@@ -437,16 +517,14 @@ export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDel
                 <button
                   className="btn btn-ghost detail-footer-delete"
                   onClick={() => setConfirming(true)}
-                  disabled={backlogActionsLocked}
-                  title={backlogActionsLocked ? 'Developers cannot delete items in this section' : undefined}
+                  disabled={deleteLockedForDeveloper}
+                  title={deleteLockedForDeveloper ? 'Developers cannot delete items in this section' : undefined}
                 >
                   <i className="bx bx-trash" /> Delete
                 </button>
                 <button
                   className="btn btn-primary"
                   onClick={() => setEditing(true)}
-                  disabled={backlogActionsLocked}
-                  title={backlogActionsLocked ? 'Developers cannot edit items in this section' : undefined}
                 >
                   <i className="bx bx-edit" /> Edit
                 </button>
