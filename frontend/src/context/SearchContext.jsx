@@ -26,7 +26,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { backlogs, features, stories, tasks, users } from "../api/index.js";
+import { projects, backlogs, features, stories, tasks, users } from "../api/index.js";
 
 const SearchContext = createContext(null);
 
@@ -43,14 +43,16 @@ export function SearchProvider({ children }) {
     setIndexState("loading");
 
     loadPromise.current = Promise.all([
+      projects.list({ limit: 1000 }),
       backlogs.list({ limit: 1000 }),
       features.list({ limit: 1000 }),
       stories.list({ limit: 1000 }),
       tasks.list({ limit: 1000 }),
       users.list({ limit: 1000 }),
     ])
-      .then(([bRes, fRes, sRes, tRes, uRes]) => {
+      .then(([prRes, bRes, fRes, sRes, tRes, uRes]) => {
         const records = [
+          ...(prRes.data ?? []).map(normaliseProject),
           ...(bRes.data ?? []).map(normaliseBacklog),
           ...(fRes.data ?? []).map(normaliseFeature),
           ...(sRes.data ?? []).map(normaliseStory),
@@ -90,6 +92,21 @@ export function useSearchContext() {
 }
 
 // ── Normalisers ───────────────────────────────────────────────────────────────
+
+function normaliseProject(p) {
+  const title = p.title ?? "";
+  const description = p.description ?? "";
+  const creator = p.created_by?.name ?? "";
+  return {
+    id: p.project_id,
+    type: "project",
+    view: "projects",
+    title,
+    description,
+    meta: creator ? `by ${creator}` : "",
+    searchText: [title, description, creator].join(" ").toLowerCase(),
+  };
+}
 
 function normaliseBacklog(b) {
   const title = b.title ?? "";

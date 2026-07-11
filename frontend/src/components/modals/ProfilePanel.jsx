@@ -1,5 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { useToast } from "../../context/ToastContext.jsx";
+import { users } from "../../api/index.js";
 import { Toggle } from "../ui/Toggle.jsx";
 
 function initials(name) {
@@ -16,7 +18,12 @@ function initials(name) {
  * @param {{ open, onClose }} props
  */
 export function ProfilePanel({ open, onClose }) {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, updateCurrentUser } = useAuth();
+  const { showToast } = useToast();
+
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(currentUser?.name ?? "");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const handler = (e) => {
@@ -26,13 +33,46 @@ export function ProfilePanel({ open, onClose }) {
     return () => document.removeEventListener("keydown", handler);
   }, [open, onClose]);
 
-  const name = currentUser?.name ?? "Jordan Davies";
-  const email = currentUser?.email ?? "jordan.d@agile.internal";
-  const roles = currentUser?.roles ?? [
-    { role_name: "Product Owner" },
-    { role_name: "Admin" },
-  ];
+  // Keep the local draft in sync whenever the panel (re)opens with fresh data.
+  useEffect(() => {
+    if (open) {
+      setName(currentUser?.name ?? "");
+      setEditing(false);
+    }
+  }, [open, currentUser?.name]);
+
+  const displayName = currentUser?.name ?? "—";
+  const email = currentUser?.email ?? "—";
+  const roles = currentUser?.roles ?? [];
   const isActive = currentUser?.is_active ?? true;
+
+  const handleSave = async () => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      showToast("Name can't be empty.", "error");
+      return;
+    }
+    if (trimmed === currentUser?.name) {
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    try {
+      await users.update(currentUser.user_id, { name: trimmed });
+      updateCurrentUser({ name: trimmed });
+      showToast("Profile updated.", "success");
+      setEditing(false);
+    } catch (err) {
+      showToast(err.message ?? "Failed to update profile.", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setName(currentUser?.name ?? "");
+    setEditing(false);
+  };
 
   return (
     <div
@@ -50,9 +90,24 @@ export function ProfilePanel({ open, onClose }) {
         <div className="panel-body">
           {/* Hero card */}
           <div className="profile-hero">
-            <div className="profile-avatar-lg">{initials(name)}</div>
-            <div>
-              <h3 className="profile-name">{name}</h3>
+            <div className="profile-avatar-lg">{initials(displayName)}</div>
+            <div style={{ flex: 1 }}>
+              {editing ? (
+                <input
+                  type="text"
+                  className="form-input"
+                  value={name}
+                  autoFocus
+                  disabled={saving}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSave();
+                    if (e.key === "Escape") handleCancel();
+                  }}
+                />
+              ) : (
+                <h3 className="profile-name">{displayName}</h3>
+              )}
               <p className="profile-email">{email}</p>
               <span
                 className={`status-indicator profile-status-inline ${isActive ? "status-active" : "status-inactive"}`}
@@ -62,6 +117,29 @@ export function ProfilePanel({ open, onClose }) {
             </div>
           </div>
 
+          {editing ? (
+            <div style={{ display: "flex", gap: "8px", marginBottom: "1rem" }}>
+              <button
+                className="btn btn-primary"
+                disabled={saving}
+                onClick={handleSave}
+              >
+                {saving ? "Saving…" : "Save"}
+              </button>
+              <button className="btn btn-ghost" disabled={saving} onClick={handleCancel}>
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              className="btn btn-ghost"
+              style={{ marginBottom: "1rem" }}
+              onClick={() => setEditing(true)}
+            >
+              <i className="bx bx-edit" /> Edit name
+            </button>
+          )}
+
           {/* Roles */}
           <div className="profile-section-label">Roles</div>
           <div className="user-roles">
@@ -70,6 +148,7 @@ export function ProfilePanel({ open, onClose }) {
                 {r.role_name ?? r}
               </span>
             ))}
+            {!roles.length && <span className="role-tag">No roles assigned</span>}
           </div>
 
           {/* Preferences */}

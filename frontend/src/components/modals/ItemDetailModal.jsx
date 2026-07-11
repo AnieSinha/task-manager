@@ -12,6 +12,10 @@ const STATUS_OPTIONS = [
   { value: 'completed', label: 'Completed' },
 ];
 
+function statusOptionsFor() {
+  return STATUS_OPTIONS;
+}
+
 const PRIORITY_OPTIONS = [
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },
@@ -19,6 +23,7 @@ const PRIORITY_OPTIONS = [
 ];
 
 const TYPE_LABELS = {
+  projects: 'Project',
   backlogs: 'Backlog Item',
   features: 'Feature',
   stories: 'Story',
@@ -26,6 +31,7 @@ const TYPE_LABELS = {
 };
 
 const TYPE_ICONS = {
+  projects: 'bx-folder',
   backlogs: 'bx-archive',
   features: 'bx-rocket',
   stories: 'bx-book-bookmark',
@@ -224,7 +230,7 @@ export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDel
 
   const hasPriority = ['backlogs', 'tasks'].includes(viewType);
   const hasParent = !!item.parentTitle;
-  const parentViews = { features: 'backlogs', stories: 'features', tasks: 'stories' };
+  const parentViews = { backlogs: 'projects', features: 'backlogs', stories: 'features', tasks: 'stories' };
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
@@ -327,6 +333,7 @@ export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDel
             {!editing && (
               <StatusPill
                 status={item.status}
+                viewType={viewType}
                 onChange={async (newStatus) => {
                   await onUpdate(item.id, { status: newStatus });
                 }}
@@ -393,7 +400,7 @@ export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDel
                   value={status}
                   editing={editing}
                   type="select"
-                  options={STATUS_OPTIONS}
+                  options={statusOptionsFor(viewType)}
                   onChange={setStatus}
                 />
               )}
@@ -459,8 +466,8 @@ export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDel
                 </MetaRow>
               )}
 
-              {/* Creator (backlogs) */}
-              {viewType === 'backlogs' && !editing && (
+              {/* Creator (projects, backlogs) */}
+              {['projects', 'backlogs'].includes(viewType) && !editing && (
                 <MetaRow icon="bx-user-circle" label="Created by">
                   {item.creatorName ?? '—'}
                 </MetaRow>

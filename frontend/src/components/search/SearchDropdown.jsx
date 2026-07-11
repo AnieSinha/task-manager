@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 
 const TYPE_ICONS = {
+  project: "bx-folder",
   backlog: "bx-archive",
   feature: "bx-rocket",
   story: "bx-book-bookmark",

@@ -3,7 +3,12 @@
 # =============================================================================
 import uuid
 from fastapi import APIRouter, HTTPException
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import (
+    CurrentUser,
+    SessionDep,
+    enforce_developer_field_restriction,
+    enforce_developer_no_delete,
+)
 from app.models import (
     Feature,
     Story,
@@ -75,20 +80,24 @@ def patch_story(
     story_id: uuid.UUID,
     body: StoryUpdate,
     session: SessionDep,
-    _: CurrentUser,
+    current_user: CurrentUser,
 ):
     s = session.get(Story, story_id)
     if not s:
         raise HTTPException(status_code=404, detail="Story not found")
+    enforce_developer_field_restriction(
+        current_user, session, set(body.model_dump(exclude_unset=True).keys())
+    )
     updated = crud.update_story(session=session, story=s, data=body)
     return _story_public(updated, session)
 
 
 @router_stories.delete("/{story_id}", status_code=204)
-def delete_story(story_id: uuid.UUID, session: SessionDep, _: CurrentUser):
+def delete_story(story_id: uuid.UUID, session: SessionDep, current_user: CurrentUser):
     s = session.get(Story, story_id)
     if not s:
         raise HTTPException(status_code=404, detail="Story not found")
+    enforce_developer_no_delete(current_user, session)
     child = session.exec(
         __import__("sqlmodel").select(Task).where(Task.story_id == story_id)
     ).first()

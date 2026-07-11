@@ -1,10 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { backlogs, features, stories, tasks, users } from "../../api/index.js";
+import { projects, backlogs, features, stories, tasks, users } from "../../api/index.js";
 import { useToast } from "../../context/ToastContext.jsx";
 import { useSearchContext } from "../../context/SearchContext.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 
-const KANBAN_VIEWS = ["backlogs", "features", "stories", "tasks"];
+const KANBAN_VIEWS = ["projects", "backlogs", "features", "stories", "tasks"];
+// Developer create-restriction applies to backlog/feature/story/task only — not projects.
+const RESTRICTED_VIEWS_FOR_DEV = ["backlogs", "features", "stories", "tasks"];
+const PARENT_REQUIRED_LABEL = {
+  backlogs: "Project",
+  features: "Backlog",
+  stories: "Feature",
+  tasks: "Story",
+};
 
 /**
  * @param {{ open, currentView, onClose, onCreated }} props
@@ -21,7 +29,7 @@ export function QuickCreateModal({ open, currentView, onClose, onCreated }) {
   );
 
   const [type, setType] = useState("backlogs");
-  const createDisabledForDeveloper = KANBAN_VIEWS.includes(type) && isDeveloper;
+  const createDisabledForDeveloper = RESTRICTED_VIEWS_FOR_DEV.includes(type) && isDeveloper;
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [priority, setPriority] = useState("medium");
@@ -61,7 +69,12 @@ export function QuickCreateModal({ open, currentView, onClose, onCreated }) {
     setParentOptions([]);
     setExistingTasks([]);
 
-    if (type === "features") {
+    if (type === "backlogs") {
+      projects
+        .list({ limit: 100 })
+        .then((res) => setParentOptions(res.data ?? []))
+        .catch(() => {});
+    } else if (type === "features") {
       backlogs
         .list({ limit: 100 })
         .then((res) => setParentOptions(res.data ?? []))
@@ -104,14 +117,8 @@ export function QuickCreateModal({ open, currentView, onClose, onCreated }) {
     }
 
     // Strict contract enforcement validation
-    if (type !== "backlogs" && !parentId) {
-      const targetLabel =
-        type === "features"
-          ? "Backlog"
-          : type === "stories"
-            ? "Feature"
-            : "Story";
-      showToast(`Please select a parent ${targetLabel}.`, "error");
+    if (type !== "projects" && !parentId) {
+      showToast(`Please select a parent ${PARENT_REQUIRED_LABEL[type]}.`, "error");
       return;
     }
 
@@ -122,12 +129,20 @@ export function QuickCreateModal({ open, currentView, onClose, onCreated }) {
       const chosenParentTaskId = parentTaskId || null;
 
       switch (type) {
+        case "projects":
+          await projects.create({
+            title,
+            description: d,
+            status: "to-do",
+          });
+          break;
         case "backlogs":
           await backlogs.create({
             title,
             description: d,
             priority,
             status: "to-do",
+            project_id: chosenParentId,
           });
           break;
         case "features":
@@ -188,9 +203,10 @@ export function QuickCreateModal({ open, currentView, onClose, onCreated }) {
 
   const needsPriority = ["backlogs", "tasks"].includes(type);
   const needsAssignee = type === "tasks";
-  const hasParent = type !== "backlogs";
+  const hasParent = type !== "projects";
 
   const getParentLabel = () => {
+    if (type === "backlogs") return "Parent Project *";
     if (type === "features") return "Parent Backlog *";
     if (type === "stories") return "Parent Feature *";
     if (type === "tasks") return "Parent Story *";
@@ -198,6 +214,7 @@ export function QuickCreateModal({ open, currentView, onClose, onCreated }) {
   };
 
   const getParentUuidValue = (item) => {
+    if (type === "backlogs") return item.project_id;
     if (type === "features") return item.backlog_item_id;
     if (type === "stories") return item.feature_id;
     if (type === "tasks") return item.story_id;
@@ -245,6 +262,7 @@ export function QuickCreateModal({ open, currentView, onClose, onCreated }) {
               value={type}
               onChange={(e) => setType(e.target.value)}
             >
+              <option value="projects">Project</option>
               <option value="backlogs">Backlog</option>
               <option value="features">Feature</option>
               <option value="stories">Story</option>

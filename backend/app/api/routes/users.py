@@ -50,13 +50,10 @@ def read_me(current_user: CurrentUser, session: SessionDep):
     return _build_user_public(current_user, session)
 
 
-@router.get(
-    "",
-    response_model=dict,
-    dependencies=[Depends(get_current_active_superuser)],
-)
+@router.get("", response_model=dict)
 def list_users(
     session: SessionDep,
+    current_user: CurrentUser,
     limit: int = 25,
     offset: int = 0,
     is_active: bool | None = None,

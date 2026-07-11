@@ -21,8 +21,9 @@ import { useSearchContext } from "../context/SearchContext.jsx";
 const DEBOUNCE_MS = 200;
 const MAX_PER_GROUP = 5;
 
-const GROUP_ORDER = ["backlog", "feature", "story", "task", "team"];
+const GROUP_ORDER = ["project", "backlog", "feature", "story", "task", "team"];
 const GROUP_LABELS = {
+  project: "Projects",
   backlog: "Backlogs",
   feature: "Features",
   story: "Stories",

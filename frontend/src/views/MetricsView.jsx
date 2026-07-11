@@ -16,6 +16,11 @@ export function MetricsView() {
 
   const summary = [
     {
+      label: "Projects",
+      value: counts.projects.total,
+      sub: `${counts.projects.inProgress} in progress`,
+    },
+    {
       label: "Open Backlogs",
       value: counts.backlogs.total,
       sub: `${counts.backlogs.inProgress} in progress`,
@@ -54,6 +59,12 @@ export function MetricsView() {
   }));
   const maxCount = Math.max(...tasksByStatus.map((b) => b.count), 1);
 
+  const projectsByStatus = COLUMNS.map((c) => ({
+    label: c.title,
+    count: counts.projects.byStatus[c.id] ?? 0,
+  }));
+  const maxProjectCount = Math.max(...projectsByStatus.map((b) => b.count), 1);
+
   return (
     <div>
       <div className="metrics-grid">
@@ -66,6 +77,22 @@ export function MetricsView() {
             <span className="metric-sub">{s.sub}</span>
           </div>
         ))}
+      </div>
+
+      <div className="metrics-chart-area">
+        <div className="metrics-chart-label">Project Distribution by Status</div>
+        <div className="metrics-bar-chart">
+          {projectsByStatus.map(({ label, count }) => (
+            <div key={label} className="chart-bar-group">
+              <div
+                className="chart-bar"
+                style={{ height: `${Math.round((count / maxProjectCount) * 90)}px` }}
+                title={`${label}: ${count}`}
+              />
+              <span className="chart-bar-label">{label}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="metrics-chart-area">

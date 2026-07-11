@@ -6,7 +6,13 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import (
+    CurrentUser,
+    SessionDep,
+    enforce_developer_field_restriction,
+    enforce_developer_no_delete,
+    is_developer_only,
+)
 from app.models import (
     AssignedUserPublic,
     AssignmentCreate,
@@ -147,20 +153,24 @@ def patch_task(
     task_id: uuid.UUID,
     body: TaskUpdate,
     session: SessionDep,
-    _: CurrentUser,
+    current_user: CurrentUser,
 ):
     task = session.get(Task, task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
+    enforce_developer_field_restriction(
+        current_user, session, set(body.model_dump(exclude_unset=True).keys())
+    )
     updated = crud.update_task(session=session, task=task, data=body)
     return _task_public(updated, session, include_subtasks=True)
 
 
 @router_tasks.delete("/{task_id}", status_code=204)
-def delete_task(task_id: uuid.UUID, session: SessionDep, _: CurrentUser):
+def delete_task(task_id: uuid.UUID, session: SessionDep, current_user: CurrentUser):
     task = session.get(Task, task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
+    enforce_developer_no_delete(current_user, session)
     if crud.get_subtasks(session=session, task_id=task_id):
         raise HTTPException(
             status_code=409, detail="Task has subtasks — delete them first"
@@ -242,6 +252,10 @@ def create_assignment(
     session: SessionDep,
     current_user: CurrentUser,
 ):
+    if is_developer_only(current_user, session):
+        raise HTTPException(
+            status_code=403, detail="Developers cannot change task assignments."
+        )
     if not session.get(Task, task_id):
         raise HTTPException(status_code=404, detail="Task not found")
     target = session.get(User, body.assigned_to)
@@ -273,8 +287,12 @@ def delete_assignment(
     task_id: uuid.UUID,
     task_assignment_id: uuid.UUID,
     session: SessionDep,
-    _: CurrentUser,
+    current_user: CurrentUser,
 ):
+    if is_developer_only(current_user, session):
+        raise HTTPException(
+            status_code=403, detail="Developers cannot change task assignments."
+        )
     a = session.get(Task_Assignments, task_assignment_id)
     if not a or a.task_id != task_id:
         raise HTTPException(status_code=404, detail="Assignment not found")

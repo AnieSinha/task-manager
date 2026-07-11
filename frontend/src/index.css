@@ -922,6 +922,38 @@ kbd {
   border-radius: var(--radius-sm);
   font-family: var(--font-label);
   font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.role-tag-remove {
+  background: none;
+  border: none;
+  color: var(--colors-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0;
+}
+
+.role-tag-remove:hover {
+  color: var(--colors-danger, #c0392b);
+}
+
+.role-tag-remove:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.role-assign-row {
+  display: flex;
+  gap: 6px;
+  margin-top: var(--space-sm, 8px);
+}
+
+.role-assign-row .form-select {
+  flex: 1;
 }
 
 /* ── Metrics ───────────────────────────────────────────────── */

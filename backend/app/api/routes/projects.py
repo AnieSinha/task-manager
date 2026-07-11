@@ -2,7 +2,9 @@ import uuid
 from fastapi import APIRouter, HTTPException
 
 from app.api.deps import CurrentUser, SessionDep
+from sqlmodel import select
 from app.models import (
+    Backlog_Item,
     Project,
     ProjectCreate,
     ProjectCreatedBy,
@@ -121,6 +123,14 @@ def delete_project(
 
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+
+    child = session.exec(
+        select(Backlog_Item).where(Backlog_Item.project_id == project_id)
+    ).first()
+    if child:
+        raise HTTPException(
+            status_code=409, detail="Project has dependent backlog items"
+        )
 
     crud.delete_project(
         session=session,

@@ -48,6 +48,43 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
+def get_user_role_names(user: User, session: Session) -> set[str]:
+    """Return the set of role_name strings assigned to a user."""
+    rows = session.exec(
+        select(Role.role_name).join(User_Role).where(User_Role.user_id == user.user_id)
+    ).all()
+    return set(rows)
+
+
+def is_developer_only(user: User, session: Session) -> bool:
+    """True if the user has the Developer role and is NOT also a superuser.
+    Superusers are never restricted, even if also tagged Developer."""
+    names = get_user_role_names(user, session)
+    return "Developer" in names and "SUPER_USER" not in names
+
+
+def enforce_developer_field_restriction(
+    current_user: User, session: Session, changed_fields: set[str]
+) -> None:
+    """Developers may only PATCH description/status. Raises 403 otherwise."""
+    if is_developer_only(current_user, session):
+        allowed = {"description", "status"}
+        if not changed_fields.issubset(allowed):
+            raise HTTPException(
+                status_code=403,
+                detail="Developers can only edit the description and status.",
+            )
+
+
+def enforce_developer_no_delete(current_user: User, session: Session) -> None:
+    """Developers cannot delete backlog/feature/story/task items."""
+    if is_developer_only(current_user, session):
+        raise HTTPException(
+            status_code=403,
+            detail="Developers cannot delete items in this section.",
+        )
+
+
 def get_current_active_superuser(
     current_user: CurrentUser, session: SessionDep
 ) -> User:

@@ -3,7 +3,12 @@
 # =============================================================================
 import uuid
 from fastapi import APIRouter, HTTPException
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import (
+    CurrentUser,
+    SessionDep,
+    enforce_developer_field_restriction,
+    enforce_developer_no_delete,
+)
 from app.models import (
     Backlog_Item,
     Feature,
@@ -75,20 +80,24 @@ def patch_feature(
     feature_id: uuid.UUID,
     body: FeatureUpdate,
     session: SessionDep,
-    _: CurrentUser,
+    current_user: CurrentUser,
 ):
     feat = session.get(Feature, feature_id)
     if not feat:
         raise HTTPException(status_code=404, detail="Feature not found")
+    enforce_developer_field_restriction(
+        current_user, session, set(body.model_dump(exclude_unset=True).keys())
+    )
     updated = crud.update_feature(session=session, feat=feat, data=body)
     return _feat_public(updated, session)
 
 
 @router_features.delete("/{feature_id}", status_code=204)
-def delete_feature(feature_id: uuid.UUID, session: SessionDep, _: CurrentUser):
+def delete_feature(feature_id: uuid.UUID, session: SessionDep, current_user: CurrentUser):
     feat = session.get(Feature, feature_id)
     if not feat:
         raise HTTPException(status_code=404, detail="Feature not found")
+    enforce_developer_no_delete(current_user, session)
     child = session.exec(
         __import__("sqlmodel").select(Story).where(Story.feature_id == feature_id)
     ).first()

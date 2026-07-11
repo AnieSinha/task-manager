@@ -83,9 +83,14 @@ export function AuthProvider({ children }) {
     setCurrentUser(null);
   }, [persistToken]);
 
+  /** Merge a partial update (e.g. after PATCH /users/{id}) into currentUser. */
+  const updateCurrentUser = useCallback((partial) => {
+    setCurrentUser((prev) => (prev ? { ...prev, ...partial } : prev));
+  }, []);
+
   return (
     <AuthContext.Provider
-      value={{ token, currentUser, authChecked, login, signup, logout }}
+      value={{ token, currentUser, authChecked, login, signup, logout, updateCurrentUser }}
     >
       {children}
     </AuthContext.Provider>

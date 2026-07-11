@@ -15,10 +15,10 @@ import { LoginPage } from './views/LoginPage.jsx';
 import { SignupPage } from './views/SignupPage.jsx';
 import { EmptyState } from './components/ui/EmptyState.jsx';
 
-const KANBAN_VIEWS = ['backlogs', 'features', 'stories', 'tasks'];
+const KANBAN_VIEWS = ['projects', 'backlogs', 'features', 'stories', 'tasks'];
 
 const VIEW_LABELS = {
-  backlogs: 'Backlogs', features: 'Features', stories: 'Stories',
+  projects: 'Projects', backlogs: 'Backlogs', features: 'Features', stories: 'Stories',
   tasks: 'Tasks', team: 'Team', metrics: 'Metrics', settings: 'Settings',
 };
 

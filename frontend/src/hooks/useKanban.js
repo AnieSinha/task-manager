@@ -4,6 +4,15 @@ import { useToast } from "../context/ToastContext.jsx";
 
 export function normalise(viewType, raw) {
   switch (viewType) {
+    case "projects":
+      return {
+        id: raw.project_id,
+        title: raw.title,
+        description: raw.description,
+        status: raw.status,
+        creatorName: raw.created_by?.name ?? "—",
+        createdAt: raw.created_at,
+      };
     case "backlogs":
       return {
         id: raw.backlog_item_id,
@@ -11,6 +20,8 @@ export function normalise(viewType, raw) {
         description: raw.description,
         priority: raw.priority,
         status: raw.status,
+        parentId: raw.project_id,
+        parentTitle: raw.project_title ?? null,
         creatorName: raw.created_by?.name ?? "—",
         createdAt: raw.created_at,
       };

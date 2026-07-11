@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 const NAV_ITEMS = [
+  { view: 'projects', icon: 'bx-folder',          label: 'Projects' },
   { view: 'backlogs', icon: 'bx-archive',        label: 'Backlogs' },
   { view: 'features', icon: 'bx-rocket',          label: 'Features' },
   { view: 'stories',  icon: 'bx-book-bookmark',   label: 'Stories' },

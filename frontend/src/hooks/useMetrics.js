@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { backlogs, features, stories, tasks, users } from "../api/index.js";
+import { projects, backlogs, features, stories, tasks, users } from "../api/index.js";
 
 const COLUMNS = ["to-do", "in-progress", "completed"];
 
@@ -15,7 +15,7 @@ function countByStatus(arr) {
 }
 
 /**
- * Fetches all five resources in parallel and derives metric counts.
+ * Fetches all six resources in parallel and derives metric counts.
  */
 export function useMetrics() {
   const [counts, setCounts] = useState(null);
@@ -25,19 +25,22 @@ export function useMetrics() {
   useEffect(() => {
     setLoading(true);
     Promise.all([
+      projects.list({ limit: 1000 }),
       backlogs.list({ limit: 1000 }),
       features.list({ limit: 1000 }),
       stories.list({ limit: 1000 }),
       tasks.list({ limit: 1000 }),
       users.list({ limit: 1000 }),
     ])
-      .then(([bRes, fRes, sRes, tRes, uRes]) => {
+      .then(([pRes, bRes, fRes, sRes, tRes, uRes]) => {
+        const pr = pRes.data ?? [];
         const bl = bRes.data ?? [];
         const fe = fRes.data ?? [];
         const st = sRes.data ?? [];
         const tk = tRes.data ?? [];
         const us = uRes.data ?? [];
         setCounts({
+          projects: countByStatus(pr),
           backlogs: countByStatus(bl),
           features: countByStatus(fe),
           stories: countByStatus(st),

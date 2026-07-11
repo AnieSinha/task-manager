@@ -152,6 +152,7 @@ class BacklogCreatedBy(SQLModel):
 class BacklogPublic(SQLModel):
     backlog_item_id: uuid.UUID
     project_id: uuid.UUID
+    project_title: str | None = None
     title: str
     description: str
     priority: str

@@ -3,7 +3,12 @@
 # =============================================================================
 import uuid
 from fastapi import APIRouter, HTTPException
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import (
+    CurrentUser,
+    SessionDep,
+    enforce_developer_field_restriction,
+    enforce_developer_no_delete,
+)
 from app.models import (
     Backlog_Item,
     BacklogCreate,
@@ -19,12 +24,14 @@ router_backlogs = APIRouter(prefix="/backlogs", tags=["backlogs"])
 
 
 def _backlog_public(item: Backlog_Item, session) -> BacklogPublic:
-    from app.models import User
+    from app.models import User, Project
 
     creator = session.get(User, item.created_by)
+    project = session.get(Project, item.project_id)
     return BacklogPublic(
         backlog_item_id=item.backlog_item_id,  # type: ignore[arg-type]
         project_id=item.project_id,
+        project_title=project.title if project else None,
         title=item.title,
         description=item.description,
         priority=item.priority,
@@ -88,20 +95,24 @@ def patch_backlog(
     backlog_item_id: uuid.UUID,
     body: BacklogUpdate,
     session: SessionDep,
-    _: CurrentUser,
+    current_user: CurrentUser,
 ):
     item = session.get(Backlog_Item, backlog_item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Backlog item not found")
+    enforce_developer_field_restriction(
+        current_user, session, set(body.model_dump(exclude_unset=True).keys())
+    )
     updated = crud.update_backlog(session=session, item=item, data=body)
     return _backlog_public(updated, session)
 
 
 @router_backlogs.delete("/{backlog_item_id}", status_code=204)
-def delete_backlog(backlog_item_id: uuid.UUID, session: SessionDep, _: CurrentUser):
+def delete_backlog(backlog_item_id: uuid.UUID, session: SessionDep, current_user: CurrentUser):
     item = session.get(Backlog_Item, backlog_item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Backlog item not found")
+    enforce_developer_no_delete(current_user, session)
     child = session.exec(
         __import__("sqlmodel")
         .select(Feature)
