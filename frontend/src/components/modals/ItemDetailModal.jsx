@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Badge } from '../ui/Badge.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
-import { users, tasks } from '../../api/index.js';
+import { users, tasks, ai } from '../../api/index.js';
+import { ProjectSummaryModal } from './ProjectSummaryModal.jsx';
+import { RoadmapPreviewModal } from './RoadmapPreviewModal.jsx';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -168,6 +170,19 @@ export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDel
   const [assigneeId, setAssigneeId] = useState('');
   const [teamList, setTeamList] = useState([]);
 
+  // AI features (Projects only)
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryText, setSummaryText] = useState('');
+  const [summaryAiGenerated, setSummaryAiGenerated] = useState(false);
+
+  const [roadmapPromptOpen, setRoadmapPromptOpen] = useState(false);
+  const [roadmapPromptText, setRoadmapPromptText] = useState('');
+  const [roadmapLoading, setRoadmapLoading] = useState(false);
+  const [roadmapPreviewOpen, setRoadmapPreviewOpen] = useState(false);
+  const [roadmapTree, setRoadmapTree] = useState(null);
+  const [roadmapAiGenerated, setRoadmapAiGenerated] = useState(false);
+
   const titleRef = useRef(null);
 
   // Load active users once, for the assignee dropdown (tasks only)
@@ -239,6 +254,40 @@ export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDel
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     });
+  };
+
+  const handleSummarize = async () => {
+    setSummaryOpen(true);
+    setSummaryLoading(true);
+    try {
+      const res = await ai.summarizeProject(item.id);
+      setSummaryText(res.summary);
+      setSummaryAiGenerated(res.ai_generated);
+    } catch (err) {
+      setSummaryText(err.message ?? 'Failed to generate summary.');
+      setSummaryAiGenerated(false);
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
+  const handleGenerateRoadmap = async () => {
+    if (!roadmapPromptText.trim()) {
+      showToast('Describe the initiative in one sentence first.', 'error');
+      return;
+    }
+    setRoadmapLoading(true);
+    try {
+      const res = await ai.generateRoadmap(item.id, roadmapPromptText.trim());
+      setRoadmapTree(res.tree);
+      setRoadmapAiGenerated(res.ai_generated);
+      setRoadmapPromptOpen(false);
+      setRoadmapPreviewOpen(true);
+    } catch (err) {
+      showToast(err.message ?? 'Failed to generate roadmap.', 'error');
+    } finally {
+      setRoadmapLoading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -473,6 +522,53 @@ export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDel
                 </MetaRow>
               )}
 
+              {/* AI Tools (projects only) */}
+              {viewType === 'projects' && !editing && (
+                <div className="ai-tools-section">
+                  <div className="form-label">AI Tools</div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={handleSummarize}
+                    >
+                      ✨ Summarize
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={() => setRoadmapPromptOpen((v) => !v)}
+                    >
+                      ✨ Generate Roadmap
+                    </button>
+                  </div>
+
+                  {roadmapPromptOpen && (
+                    <div className="roadmap-prompt-box">
+                      <input
+                        className="form-input"
+                        placeholder="e.g. Build a checkout flow with Stripe payments"
+                        value={roadmapPromptText}
+                        autoFocus
+                        disabled={roadmapLoading}
+                        onChange={(e) => setRoadmapPromptText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleGenerateRoadmap();
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        disabled={roadmapLoading}
+                        onClick={handleGenerateRoadmap}
+                      >
+                        {roadmapLoading ? 'Generating…' : 'Generate'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Timestamps */}
               {!editing && (
                 <div className="detail-timestamps">
@@ -540,6 +636,26 @@ export function ItemDetailModal({ open, item, viewType, onClose, onUpdate, onDel
           </div>
         )}
       </div>
+
+      {viewType === 'projects' && (
+        <>
+          <ProjectSummaryModal
+            open={summaryOpen}
+            loading={summaryLoading}
+            summary={summaryText}
+            aiGenerated={summaryAiGenerated}
+            onClose={() => setSummaryOpen(false)}
+          />
+          <RoadmapPreviewModal
+            open={roadmapPreviewOpen}
+            projectId={item.id}
+            initialTree={roadmapTree}
+            aiGenerated={roadmapAiGenerated}
+            onClose={() => setRoadmapPreviewOpen(false)}
+            onCommitted={() => setRoadmapPreviewOpen(false)}
+          />
+        </>
+      )}
     </div>
   );
 }

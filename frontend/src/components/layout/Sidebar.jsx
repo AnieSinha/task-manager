@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { view: 'features', icon: 'bx-rocket',          label: 'Features' },
   { view: 'stories',  icon: 'bx-book-bookmark',   label: 'Stories' },
   { view: 'tasks',    icon: 'bx-check-square',    label: 'Tasks' },
+  { view: 'hierarchy', icon: 'bx-sitemap',        label: 'Hierarchy' },
   { view: 'team',     icon: 'bx-group',           label: 'Team' },
   { view: 'metrics',  icon: 'bx-bar-chart-alt-2', label: 'Metrics' },
 ];

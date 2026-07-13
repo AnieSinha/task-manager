@@ -1,6 +1,7 @@
 export { auth } from "./auth.js";
 export { users } from "./users.js";
 export { roles } from "./roles.js";
+export { ai } from "./ai.js";
 export { projects } from "./projects.js";
 export { backlogs } from "./backlogs.js";
 export { features } from "./features.js";

@@ -11,6 +11,7 @@ import { KanbanView } from './views/KanbanView.jsx';
 import { TeamView } from './views/TeamView.jsx';
 import { MetricsView } from './views/MetricsView.jsx';
 import { SettingsView } from './views/SettingsView.jsx';
+import { HierarchyView } from './views/HierarchyView.jsx';
 import { LoginPage } from './views/LoginPage.jsx';
 import { SignupPage } from './views/SignupPage.jsx';
 import { EmptyState } from './components/ui/EmptyState.jsx';
@@ -19,7 +20,7 @@ const KANBAN_VIEWS = ['projects', 'backlogs', 'features', 'stories', 'tasks'];
 
 const VIEW_LABELS = {
   projects: 'Projects', backlogs: 'Backlogs', features: 'Features', stories: 'Stories',
-  tasks: 'Tasks', team: 'Team', metrics: 'Metrics', settings: 'Settings',
+  tasks: 'Tasks', hierarchy: 'Hierarchy', team: 'Team', metrics: 'Metrics', settings: 'Settings',
 };
 
 // ── Workspace router ──────────────────────────────────────────────────────────
@@ -28,6 +29,7 @@ function WorkspaceContent({ currentView, onNavigate }) {
     return <KanbanView viewType={currentView} onNavigate={onNavigate} />;
   }
   switch (currentView) {
+    case 'hierarchy': return <HierarchyView onNavigate={onNavigate} />;
     case 'team': return <TeamView />;
     case 'metrics': return <MetricsView />;
     case 'settings': return <SettingsView />;
@@ -44,7 +46,7 @@ function WorkspaceContent({ currentView, onNavigate }) {
 
 // ── Authenticated shell ───────────────────────────────────────────────────────
 function AppShell() {
-  const [currentView, setCurrentView] = useState('backlogs');
+  const [currentView, setCurrentView] = useState('projects');
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);

@@ -2153,3 +2153,149 @@ body {
 .card:focus .card-open-hint {
   opacity: 1;
 }
+/* ── AI Tools (Project detail) ────────────────────────────────── */
+.ai-tools-section {
+  margin: var(--space-md) 0;
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--colors-border);
+}
+
+.roadmap-prompt-box {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.roadmap-prompt-box .form-input {
+  flex: 1;
+}
+
+/* ── Roadmap preview tree ──────────────────────────────────────── */
+.roadmap-tree {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.roadmap-node {
+  border-left: 2px solid var(--colors-border);
+  padding-left: var(--space-sm);
+  margin-left: 2px;
+}
+
+.roadmap-node-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 4px 0;
+}
+
+.roadmap-node-row i:first-child {
+  color: var(--colors-secondary);
+  flex-shrink: 0;
+}
+
+.roadmap-input {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+.roadmap-backlog > .roadmap-node-row .roadmap-input {
+  font-weight: 600;
+}
+
+.roadmap-remove {
+  background: none;
+  border: none;
+  color: var(--colors-secondary);
+  cursor: pointer;
+  padding: 4px;
+  flex-shrink: 0;
+}
+
+.roadmap-remove:hover {
+  color: var(--colors-error);
+}
+
+.roadmap-feature { margin-left: var(--space-md); }
+.roadmap-story { margin-left: var(--space-md); }
+.roadmap-task { margin-left: var(--space-md); }
+
+/* ── Hierarchy tree view ───────────────────────────────────────── */
+.hierarchy-tree {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.tree-node-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 4px;
+  border-radius: var(--radius-sm);
+}
+
+.tree-node-row:hover {
+  background-color: var(--colors-surface-1);
+}
+
+.tree-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--colors-secondary);
+  display: flex;
+  align-items: center;
+  padding: 0;
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.tree-toggle-spacer {
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.tree-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background-color: var(--colors-border);
+}
+
+.tree-dot-todo { background-color: var(--colors-border); }
+.tree-dot-inprogress { background-color: var(--colors-warning); }
+.tree-dot-completed { background-color: var(--colors-success); }
+
+.tree-node-icon {
+  color: var(--colors-secondary);
+  flex-shrink: 0;
+}
+
+.tree-node-title {
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.tree-node-title:hover {
+  text-decoration: underline;
+  color: var(--colors-tertiary);
+}
+
+.tree-node-count {
+  color: var(--colors-secondary);
+  font-size: 11px;
+  background-color: var(--colors-surface-2);
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: 4px;
+}
+
+.tree-children {
+  margin-left: 24px;
+  border-left: 1px solid var(--colors-border);
+  padding-left: 4px;
+}

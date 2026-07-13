@@ -8,6 +8,7 @@ from app.api.routes.backlogs import router_backlogs
 from app.api.routes.features import router_features
 from app.api.routes.stories import router_stories
 from app.api.routes.tasks import router_tasks
+from app.api.routes.ai import router_ai
 
 api_router = APIRouter()
 
@@ -19,3 +20,4 @@ api_router.include_router(router_backlogs)
 api_router.include_router(router_features)
 api_router.include_router(router_stories)
 api_router.include_router(router_tasks)
+api_router.include_router(router_ai)
